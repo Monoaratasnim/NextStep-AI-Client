@@ -29,7 +29,6 @@ export default function Footer() {
   const handleSubscribe = (e: React.FormEvent) => {
     e.preventDefault();
     if (email) {
-      // Mock subscription handler
       alert(`Subscribed ${email} to our newsletter!`);
       setEmail("");
     }
@@ -72,20 +71,20 @@ export default function Footer() {
   ];
 
   return (
-    <footer className="w-full border-t border-zinc-200/50 bg-zinc-50 dark:border-zinc-900 dark:bg-zinc-950/40">
+    <footer className="w-full border-t border-[#27272A] bg-[#0A0A0A]">
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-4">
           {/* Logo and Intro */}
           <div className="flex flex-col gap-4">
             <Link href="/" className="flex items-center gap-2 group w-fit">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-zinc-900 text-white dark:bg-zinc-50 dark:text-zinc-950 transition-transform duration-300 group-hover:rotate-12">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#4F46E5] text-white transition-transform duration-300 group-hover:rotate-12">
                 <Sparkles className="h-4 w-4" />
               </div>
-              <span className="text-lg font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
-                NextStep<span className="text-zinc-500 dark:text-zinc-400">AI</span>
+              <span className="text-lg font-bold tracking-tight text-white">
+                NextStep<span className="text-[#A1A1AA]">AI</span>
               </span>
             </Link>
-            <p className="text-sm text-zinc-500 dark:text-zinc-400 max-w-xs leading-relaxed">
+            <p className="text-sm text-[#A1A1AA] max-w-xs leading-relaxed">
               Empowering developers and tech professionals to design personalized career roadmaps and master necessary skills using advanced AI.
             </p>
             <div className="flex items-center gap-3 mt-2">
@@ -96,7 +95,7 @@ export default function Footer() {
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label={social.label}
-                  className="rounded-full p-2 text-zinc-400 hover:bg-zinc-200/50 hover:text-zinc-900 dark:text-zinc-500 dark:hover:bg-zinc-900 dark:hover:text-zinc-50 transition-all duration-200 hover:scale-110"
+                  className="rounded-full p-2 text-[#71717A] hover:bg-[#27272A] hover:text-white transition-all duration-200 hover:scale-110"
                 >
                   {social.icon}
                 </a>
@@ -108,7 +107,7 @@ export default function Footer() {
           <div className="grid grid-cols-2 gap-8 sm:grid-cols-3 lg:col-span-3">
             {footerLinks.map((section, idx) => (
               <div key={idx} className="flex flex-col gap-3">
-                <h3 className="text-sm font-semibold tracking-wider text-zinc-900 dark:text-zinc-50 uppercase">
+                <h3 className="text-sm font-semibold tracking-wider text-white uppercase">
                   {section.title}
                 </h3>
                 <ul className="flex flex-col gap-2.5">
@@ -116,7 +115,7 @@ export default function Footer() {
                     <li key={linkIdx}>
                       <Link
                         href={link.href}
-                        className="text-sm text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-50 transition-colors duration-200"
+                        className="text-sm text-[#71717A] hover:text-white transition-colors duration-200"
                       >
                         {link.label}
                       </Link>
@@ -129,16 +128,16 @@ export default function Footer() {
             {/* Newsletter Column */}
             <div className="col-span-2 sm:col-span-3 lg:col-span-1 flex flex-col gap-4">
               <div className="flex flex-col gap-1.5">
-                <h3 className="text-sm font-semibold tracking-wider text-zinc-900 dark:text-zinc-50 uppercase">
+                <h3 className="text-sm font-semibold tracking-wider text-white uppercase">
                   Stay updated
                 </h3>
-                <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                <p className="text-xs text-[#A1A1AA]">
                   Subscribe to get the latest guides and feature announcements.
                 </p>
               </div>
               <form onSubmit={handleSubscribe} className="flex flex-col gap-2 sm:flex-row lg:flex-col xl:flex-row">
                 <div className="relative flex-1">
-                  <span className="absolute inset-y-0 left-3 flex items-center text-zinc-400 pointer-events-none">
+                  <span className="absolute inset-y-0 left-3 flex items-center text-[#71717A] pointer-events-none">
                     <Mail className="h-4 w-4" />
                   </span>
                   <input
@@ -147,7 +146,7 @@ export default function Footer() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="Enter your email"
-                    className="w-full rounded-full border border-zinc-200 bg-white py-2 pl-9 pr-4 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-zinc-400 focus:outline-none focus:ring-1 focus:ring-zinc-400 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-50 dark:placeholder:text-zinc-500 dark:focus:border-zinc-600 dark:focus:ring-zinc-600"
+                    className="w-full rounded-full border border-[#27272A] bg-[#111111] py-2 pl-9 pr-4 text-sm text-white placeholder:text-[#71717A] focus:border-[#4F46E5] focus:outline-none focus:ring-1 focus:ring-[#4F46E5]"
                   />
                 </div>
                 <Button type="submit" variant="primary" size="sm" className="whitespace-nowrap rounded-full">
@@ -158,11 +157,11 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="mt-12 border-t border-zinc-200/50 pt-8 dark:border-zinc-900 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-xs text-zinc-400 dark:text-zinc-500">
+        <div className="mt-12 border-t border-[#27272A] pt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <p className="text-xs text-[#71717A]">
             &copy; {new Date().getFullYear()} NextStep AI. All rights reserved.
           </p>
-          <p className="text-xs text-zinc-400 dark:text-zinc-500">
+          <p className="text-xs text-[#71717A]">
             Empowered by Advanced Agentic Intelligence.
           </p>
         </div>

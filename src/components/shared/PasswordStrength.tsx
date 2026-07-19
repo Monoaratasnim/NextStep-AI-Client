@@ -34,14 +34,14 @@ export default function PasswordStrength({ password }: PasswordStrengthProps) {
   return (
     <div className="space-y-1.5">
       <div className="flex items-center justify-between">
-        <span className="text-xs text-zinc-500 dark:text-zinc-400">
+        <span className="text-xs text-[#71717A]">
           Password strength
         </span>
-        <span className="text-xs font-medium text-zinc-600 dark:text-zinc-300">
+        <span className="text-xs font-medium text-[#A1A1AA]">
           {label}
         </span>
       </div>
-      <div className="h-1 w-full overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800">
+      <div className="h-1 w-full overflow-hidden rounded-full bg-[#27272A]">
         <div
           className={`h-full rounded-full transition-all duration-500 ease-out ${color}`}
           style={{ width: `${percentage}%` }}
@@ -53,8 +53,8 @@ export default function PasswordStrength({ password }: PasswordStrengthProps) {
             key={i}
             className={`h-0.5 flex-1 rounded-full transition-colors duration-300 ${
               i < score
-                ? color.replace("bg-", "bg-")
-                : "bg-zinc-200 dark:bg-zinc-800"
+                ? color
+                : "bg-[#27272A]"
             }`}
           />
         ))}

@@ -15,10 +15,19 @@ import {
   Download,
   ChevronDown,
   ChevronUp,
+  Route,
+  Target,
+  Zap,
+  CheckCircle2,
+  Clock,
+  Trophy,
+  Rocket,
 } from "lucide-react";
 import { useCareerProfile } from "@/hooks/useCareerProfile";
 import { useMyRoadmap, useGenerateRoadmap } from "@/hooks/useAi";
+import { useNotifications } from "@/contexts/NotificationContext";
 import Button from "@/components/shared/Button";
+import { generatePdf } from "@/utils/generatePdf";
 
 function parsePhases(content: string) {
   const phases: { title: string; content: string }[] = [];
@@ -41,38 +50,78 @@ function parsePhases(content: string) {
   return phases;
 }
 
-function handleDownload(content: string, filename: string) {
-  const blob = new Blob([content], { type: "text/markdown" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  a.click();
-  URL.revokeObjectURL(url);
+function getPhaseStyle(index: number, total: number) {
+  if (index === 0) {
+    return {
+      node: "border-emerald-500 bg-emerald-500/15 text-emerald-400 shadow-emerald-500/20",
+      line: "from-emerald-500/40",
+      card: "border-emerald-500/30 hover:border-emerald-500/50 hover:shadow-emerald-500/5",
+      badge: "bg-emerald-500/10 text-emerald-400 ring-emerald-500/10",
+      icon: Rocket,
+      label: "Start",
+    };
+  }
+  if (index === total - 1) {
+    return {
+      node: "border-amber-500 bg-amber-500/15 text-amber-400 shadow-amber-500/20",
+      line: "from-amber-500/40",
+      card: "border-amber-500/30 hover:border-amber-500/50 hover:shadow-amber-500/5",
+      badge: "bg-amber-500/10 text-amber-400 ring-amber-500/10",
+      icon: Trophy,
+      label: "Goal",
+    };
+  }
+  return {
+    node: "border-[#4F46E5] bg-[#4F46E5]/15 text-[#4F46E5] shadow-[#4F46E5]/20",
+    line: "from-[#4F46E5]/40",
+    card: "border-[#4F46E5]/20 hover:border-[#4F46E5]/40 hover:shadow-[#4F46E5]/5",
+    badge: "bg-[#4F46E5]/10 text-[#4F46E5] ring-[#4F46E5]/10",
+    icon: Route,
+    label: `Phase ${index}`,
+  };
 }
 
 function TimelinePhase({
   phase,
   index,
   isLast,
+  total,
   defaultOpen,
 }: {
   phase: { title: string; content: string };
   index: number;
   isLast: boolean;
+  total: number;
   defaultOpen: boolean;
 }) {
   const [isOpen, setIsOpen] = useState(defaultOpen);
+  const style = getPhaseStyle(index, total);
+  const PhaseIcon = style.icon;
 
   return (
-    <div className="relative flex gap-4 sm:gap-6">
-      {/* Timeline line + dot */}
+    <div className="relative flex gap-4 sm:gap-6 group/timeline">
+      {/* Timeline line + node */}
       <div className="flex flex-col items-center">
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border-2 border-indigo-500 bg-white text-sm font-bold text-indigo-600 dark:bg-zinc-900 dark:text-indigo-400">
-          {index + 1}
+        {/* Node */}
+        <div
+          className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full border-2 shadow-lg transition-all duration-300 group-hover/timeline:scale-110 ${style.node}`}
+        >
+          {index === 0 ? (
+            <Rocket className="h-4.5 w-4.5" />
+          ) : isLast ? (
+            <Trophy className="h-4.5 w-4.5" />
+          ) : (
+            <span className="text-xs font-bold">{index + 1}</span>
+          )}
         </div>
+        {/* Connector line */}
         {!isLast && (
-          <div className="w-0.5 flex-1 bg-zinc-200 dark:bg-zinc-700 mt-2" />
+          <div className="relative w-0.5 flex-1 my-2">
+            <div className="absolute inset-0 bg-[#27272A]" />
+            <div
+              className={`absolute inset-0 bg-gradient-to-b ${style.line} to-transparent`}
+            />
+          </div>
         )}
       </div>
 
@@ -80,37 +129,64 @@ function TimelinePhase({
       <div className="flex-1 pb-6">
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className="w-full text-left"
+          className="w-full text-left group/card"
         >
-          <div className="flex items-center justify-between rounded-2xl border border-zinc-200 bg-white p-4 transition-all duration-200 hover:border-zinc-300 hover:shadow-sm dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-zinc-700">
+          <div
+            className={`flex items-center justify-between rounded-2xl border bg-[#0F0F11] p-4 transition-all duration-300 ${style.card} ${
+              isOpen ? "shadow-lg" : "shadow-sm"
+            }`}
+          >
             <div className="flex items-center gap-3">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-50 dark:bg-indigo-950/30">
-                <Map className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+              <div className={`flex h-9 w-9 items-center justify-center rounded-xl transition-transform duration-300 group-hover/card:scale-110 ${style.badge} ring-1`}>
+                <PhaseIcon className="h-4 w-4" />
               </div>
               <div>
-                <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">
+                <h3 className="text-sm font-semibold text-white leading-tight">
                   {phase.title}
                 </h3>
-                <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                  Phase {index + 1}
-                </p>
+                <div className="mt-1 flex items-center gap-2">
+                  <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider ${style.badge} ring-1`}>
+                    {style.label}
+                  </span>
+                  {!isOpen && (
+                    <span className="text-[10px] text-[#71717A]">
+                      Click to expand
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
-            {isOpen ? (
-              <ChevronUp className="h-4 w-4 text-zinc-400" />
-            ) : (
-              <ChevronDown className="h-4 w-4 text-zinc-400" />
-            )}
+            <div className="flex items-center gap-2">
+              {isOpen ? (
+                <ChevronUp className="h-4 w-4 text-[#71717A] transition-transform duration-200" />
+              ) : (
+                <ChevronDown className="h-4 w-4 text-[#71717A] transition-transform duration-200" />
+              )}
+            </div>
           </div>
         </button>
 
-        {isOpen && (
-          <div className="mt-2 rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900 animate-in fade-in slide-in-from-top-1 duration-200">
-            <div className="prose prose-sm prose-zinc dark:prose-invert max-w-none prose-headings:text-xs prose-headings:font-semibold prose-headings:uppercase prose-headings:tracking-wider prose-headings:text-zinc-500 dark:prose-headings:text-zinc-400 prose-p:text-sm prose-p:text-zinc-600 dark:prose-p:text-zinc-400 prose-li:text-sm prose-li:text-zinc-600 dark:prose-li:text-zinc-400 prose-strong:text-zinc-900 dark:prose-strong:text-zinc-50 prose-code:text-xs prose-code:bg-zinc-100 dark:prose-code:bg-zinc-800 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-zinc-700 dark:prose-code:text-zinc-300">
+        {/* Expandable content */}
+        <div
+          className={`overflow-hidden transition-all duration-300 ease-in-out ${
+            isOpen ? "max-h-[2000px] opacity-100" : "max-h-0 opacity-0"
+          }`}
+        >
+          <div className="mt-2 rounded-2xl border border-[#27272A]/60 bg-[#0F0F11] p-5 sm:p-6">
+            <div className="prose prose-sm max-w-none
+              prose-headings:text-xs prose-headings:font-semibold prose-headings:uppercase prose-headings:tracking-wider prose-headings:text-[#71717A] prose-headings:mt-5 prose-headings:mb-2
+              prose-p:text-sm prose-p:text-[#A1A1AA] prose-p:leading-relaxed
+              prose-li:text-sm prose-li:text-[#A1A1AA] prose-li:marker:text-[#3F3F46]
+              prose-strong:text-white prose-strong:font-semibold
+              prose-code:text-xs prose-code:bg-[#27272A]/60 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded-md prose-code:text-[#A1A1AA] prose-code:font-medium
+              prose-a:text-[#4F46E5] prose-a:no-underline hover:prose-a:underline
+              prose-hr:border-[#27272A] prose-hr:my-4
+              prose-blockquote:border-l-[#4F46E5] prose-blockquote:text-[#71717A] prose-blockquote:pl-4 prose-blockquote:italic
+            ">
               <Markdown>{phase.content}</Markdown>
             </div>
           </div>
-        )}
+        </div>
       </div>
     </div>
   );
@@ -133,10 +209,22 @@ export default function RoadmapPage() {
     reset,
   } = useGenerateRoadmap();
 
+  const { addNotification } = useNotifications();
+
   const roadmap = generatedRoadmap || savedRoadmap;
   const roadmapContent = roadmap?.content;
   const isProfileNotFound =
     profileError?.message === "Career profile not found";
+
+  React.useEffect(() => {
+    if (generatedRoadmap) {
+      addNotification({
+        type: "roadmap",
+        title: "Roadmap Generated",
+        description: "Your AI career roadmap has been successfully generated.",
+      });
+    }
+  }, [generatedRoadmap, addNotification]);
 
   const phases = useMemo(
     () => (roadmapContent ? parsePhases(roadmapContent) : []),
@@ -165,22 +253,39 @@ export default function RoadmapPage() {
 
   const handleDownloadClick = useCallback(() => {
     if (!roadmapContent) return;
-    handleDownload(roadmapContent, "career-roadmap.md");
-  }, [roadmapContent]);
+    generatePdf(roadmapContent, "career-roadmap.pdf", {
+      title: "Career Roadmap",
+      careerGoal: profile?.careerGoal,
+      preferredIndustry: profile?.preferredIndustry,
+      experienceLevel: profile?.experienceLevel,
+      generatedAt: roadmap?.updatedAt
+        ? new Date(roadmap.updatedAt)
+        : undefined,
+    });
+  }, [roadmapContent, profile, roadmap]);
 
   if (profileLoading || savedLoading) {
     return (
       <div className="space-y-6">
-        <div className="space-y-2">
-          <div className="h-8 w-48 animate-pulse rounded-lg bg-zinc-100 dark:bg-zinc-800" />
-          <div className="h-4 w-72 animate-pulse rounded-lg bg-zinc-100 dark:bg-zinc-800" />
+        {/* Skeleton header */}
+        <div className="space-y-3">
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 animate-pulse rounded-xl bg-[#27272A]/50" />
+            <div className="h-8 w-56 animate-pulse rounded-lg bg-[#27272A]/50" />
+          </div>
+          <div className="h-4 w-80 animate-pulse rounded-lg bg-[#27272A]/30" />
         </div>
+        {/* Skeleton toolbar */}
+        <div className="h-12 w-full animate-pulse rounded-xl bg-[#27272A]/30" />
+        {/* Skeleton profile */}
+        <div className="h-28 w-full animate-pulse rounded-2xl bg-[#27272A]/30" />
+        {/* Skeleton timeline */}
         <div className="space-y-4">
-          {Array.from({ length: 3 }).map((_, i) => (
-            <div
-              key={i}
-              className="h-24 animate-pulse rounded-2xl bg-zinc-100 dark:bg-zinc-800"
-            />
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="flex gap-6">
+              <div className="h-11 w-11 shrink-0 animate-pulse rounded-full bg-[#27272A]/50" />
+              <div className="flex-1 h-24 animate-pulse rounded-2xl bg-[#27272A]/30" />
+            </div>
           ))}
         </div>
       </div>
@@ -190,13 +295,13 @@ export default function RoadmapPage() {
   if (profileError && !isProfileNotFound) {
     return (
       <div className="flex flex-col items-center justify-center py-24 text-center">
-        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-rose-100 dark:bg-rose-950/30">
-          <AlertCircle className="h-7 w-7 text-rose-600 dark:text-rose-400" />
+        <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-rose-500/10 ring-1 ring-rose-500/20">
+          <AlertCircle className="h-8 w-8 text-rose-400" />
         </div>
-        <h3 className="mt-4 text-lg font-semibold text-zinc-900 dark:text-zinc-50">
+        <h3 className="mt-5 text-xl font-semibold text-white">
           Something went wrong
         </h3>
-        <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+        <p className="mt-2 max-w-sm text-sm text-[#A1A1AA] leading-relaxed">
           {profileError.message}
         </p>
       </div>
@@ -205,19 +310,22 @@ export default function RoadmapPage() {
 
   if (isProfileNotFound) {
     return (
-      <div className="rounded-2xl border border-dashed border-zinc-300 bg-white p-8 text-center dark:border-zinc-700 dark:bg-zinc-900">
-        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-zinc-100 dark:bg-zinc-800">
-          <Sparkles className="h-7 w-7 text-zinc-400 dark:text-zinc-500" />
+      <div className="flex flex-col items-center justify-center py-16 text-center">
+        <div className="relative">
+          <div className="absolute -inset-4 rounded-full bg-[#4F46E5]/10 blur-xl" />
+          <div className="relative flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-[#4F46E5]/20 to-[#4F46E5]/5 ring-1 ring-[#4F46E5]/20">
+            <Sparkles className="h-9 w-9 text-[#4F46E5]" />
+          </div>
         </div>
-        <h3 className="mt-4 text-lg font-semibold text-zinc-900 dark:text-zinc-50">
+        <h3 className="mt-6 text-xl font-semibold text-white">
           Career profile required
         </h3>
-        <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400 max-w-md mx-auto">
+        <p className="mt-2 max-w-md text-sm text-[#A1A1AA] leading-relaxed">
           Create your career profile first to generate a personalized
-          learning roadmap.
+          learning roadmap tailored to your goals.
         </p>
-        <Link href="/career-profile" className="mt-5 inline-block">
-          <Button variant="primary" size="md" className="gap-1.5">
+        <Link href="/career-profile" className="mt-6 inline-block">
+          <Button variant="primary" size="md" className="gap-2 px-6">
             Create Profile
             <ArrowRight className="h-4 w-4" />
           </Button>
@@ -227,118 +335,135 @@ export default function RoadmapPage() {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h2 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
-            Career Roadmap
-          </h2>
-          <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-            AI-generated step-by-step learning path for your career goal.
-          </p>
-          {roadmap?.updatedAt && (
-            <p className="mt-1 text-xs text-zinc-400 dark:text-zinc-500">
-              Generated on{" "}
-              {new Date(roadmap.updatedAt).toLocaleDateString("en-US", {
-                year: "numeric",
-                month: "long",
-                day: "numeric",
-              })}
-            </p>
-          )}
-        </div>
-        <div className="flex items-center gap-2">
-          {roadmapContent && (
-            <>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleCopy}
-                className="gap-1.5"
-              >
-                <Copy className="h-4 w-4" />
-                Copy
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleDownloadClick}
-                className="gap-1.5"
-              >
-                <Download className="h-4 w-4" />
-                Download
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleRegenerate}
-                disabled={isPending}
-                className="gap-1.5"
-              >
-                <RefreshCw className="h-4 w-4" />
-                Regenerate
-              </Button>
-            </>
-          )}
-          {!roadmapContent && (
-            <Button
-              variant="primary"
-              size="sm"
-              onClick={handleGenerate}
-              disabled={isPending}
-              className="gap-1.5"
-            >
-              {isPending ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Generating...
-                </>
-              ) : (
-                <>
-                  <Map className="h-4 w-4" />
-                  Generate Roadmap
-                </>
+    <div className="space-y-4">
+      {/* Hero Header */}
+      <div className="relative overflow-hidden rounded-2xl border border-[#27272A]/60 bg-gradient-to-br from-[#0F0F11] via-[#111113] to-[#0F0F11] p-5 sm:p-6">
+        {/* Background glow */}
+        <div className="absolute -top-24 -right-24 h-48 w-48 rounded-full bg-[#10B981]/8 blur-3xl" />
+        <div className="absolute -bottom-16 -left-16 h-32 w-32 rounded-full bg-[#4F46E5]/5 blur-2xl" />
+
+        <div className="relative flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="flex items-start gap-4">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#10B981] to-emerald-600 shadow-lg shadow-[#10B981]/20">
+              <Map className="h-6 w-6 text-white" />
+            </div>
+            <div>
+              <h2 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">
+                Career Roadmap
+              </h2>
+              <p className="mt-1.5 text-sm text-[#A1A1AA] leading-relaxed">
+                AI-generated step-by-step learning path for your career goal.
+              </p>
+              {roadmap?.updatedAt && (
+                <div className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-[#27272A] bg-[#111113] px-3 py-1">
+                  <Zap className="h-3 w-3 text-[#10B981]" />
+                  <span className="text-xs text-[#71717A]">
+                    Generated{" "}
+                    {new Date(roadmap.updatedAt).toLocaleDateString("en-US", {
+                      year: "numeric",
+                      month: "short",
+                      day: "numeric",
+                    })}
+                  </span>
+                </div>
               )}
-            </Button>
-          )}
+            </div>
+          </div>
         </div>
       </div>
 
+      {/* Action Bar */}
+      {roadmapContent && (
+        <div className="rounded-2xl border border-[#27272A]/60 bg-[#0F0F11] px-4 py-2.5">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-xs text-[#71717A]">
+              <Sparkles className="h-3.5 w-3.5 text-[#10B981]" />
+              <span className="hidden sm:inline">AI Roadmap Report</span>
+              <span className="sm:hidden">Report</span>
+              <span className="mx-1.5 text-[#3F3F46]">·</span>
+              <Clock className="h-3 w-3 text-[#71717A]" />
+              <span>{phases.length} phases</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleCopy}
+                className="gap-1.5 text-[#A1A1AA] hover:text-white"
+              >
+                <Copy className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">Copy</span>
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleDownloadClick}
+                className="gap-1.5 text-[#A1A1AA] hover:text-white"
+              >
+                <Download className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">PDF</span>
+              </Button>
+              <div className="h-4 w-px bg-[#27272A]" />
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleRegenerate}
+                disabled={isPending}
+                className="gap-1.5 text-[#A1A1AA] hover:text-white"
+              >
+                <RefreshCw className={`h-3.5 w-3.5 ${isPending ? "animate-spin" : ""}`} />
+                <span className="hidden sm:inline">Regenerate</span>
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Profile Summary */}
       {profile && (
-        <div className="rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
-          <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 mb-3">
-            Target Goal
-          </h3>
-          <p className="text-sm font-medium text-zinc-900 dark:text-zinc-50">
+        <div className="rounded-2xl border border-[#27272A]/60 bg-[#0F0F11] p-5 sm:p-6">
+          <div className="mb-4 flex items-center gap-2">
+            <Target className="h-4 w-4 text-[#10B981]" />
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-[#71717A]">
+              Target Goal
+            </h3>
+          </div>
+          <p className="text-base font-semibold text-white leading-snug">
             {profile.careerGoal}
           </p>
-          <div className="mt-2 flex flex-wrap gap-2">
-            {profile.skills.slice(0, 5).map((skill) => (
+          <div className="mt-3 flex flex-wrap gap-1.5">
+            {profile.skills.slice(0, 6).map((skill) => (
               <span
                 key={skill}
-                className="inline-flex rounded-lg bg-indigo-50 px-2.5 py-1 text-xs font-medium text-indigo-700 dark:bg-indigo-950/30 dark:text-indigo-300"
+                className="inline-flex rounded-lg bg-[#4F46E5]/10 px-2.5 py-1 text-xs font-medium text-[#4F46E5] ring-1 ring-[#4F46E5]/10 transition-colors hover:bg-[#4F46E5]/15"
               >
                 {skill}
               </span>
             ))}
+            {profile.skills.length > 6 && (
+              <span className="inline-flex rounded-lg bg-[#27272A]/40 px-2.5 py-1 text-xs font-medium text-[#71717A]">
+                +{profile.skills.length - 6} more
+              </span>
+            )}
           </div>
-          <div className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
-            {profile.experienceLevel}
+          <div className="mt-3 flex items-center gap-2 text-xs text-[#A1A1AA]">
+            <div className="h-1.5 w-1.5 rounded-full bg-[#4F46E5]" />
+            <span>{profile.experienceLevel}</span>
           </div>
         </div>
       )}
 
       {/* Error state */}
       {roadmapError && (
-        <div className="flex items-center gap-3 rounded-2xl border border-rose-200 bg-rose-50 p-5 dark:border-rose-900/30 dark:bg-rose-950/20">
-          <AlertCircle className="h-5 w-5 shrink-0 text-rose-600 dark:text-rose-400" />
+        <div className="flex items-center gap-4 rounded-2xl border border-rose-500/20 bg-rose-500/5 p-5 ring-1 ring-rose-500/10">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-rose-500/10">
+            <AlertCircle className="h-5 w-5 text-rose-400" />
+          </div>
           <div>
-            <p className="text-sm font-medium text-rose-700 dark:text-rose-300">
+            <p className="text-sm font-medium text-rose-300">
               Generation failed
             </p>
-            <p className="text-xs text-rose-600/80 dark:text-rose-400/80">
+            <p className="mt-0.5 text-xs text-rose-400/70">
               {roadmapError.message}
             </p>
           </div>
@@ -347,24 +472,48 @@ export default function RoadmapPage() {
 
       {/* Loading state */}
       {isPending && (
-        <div className="rounded-2xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
-          <div className="flex items-center gap-3 mb-5">
-            <Loader2 className="h-5 w-5 animate-spin text-indigo-500" />
-            <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-              AI is crafting your roadmap...
-            </span>
+        <div className="overflow-hidden rounded-2xl border border-[#27272A]/60 bg-[#0F0F11] p-6 sm:p-8">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="relative">
+              <div className="absolute inset-0 rounded-full bg-[#10B981]/20 blur-md" />
+              <div className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-[#10B981]/15">
+                <Loader2 className="h-5 w-5 animate-spin text-[#10B981]" />
+              </div>
+            </div>
+            <div>
+              <p className="text-sm font-medium text-white">
+                AI is crafting your roadmap
+              </p>
+              <p className="text-xs text-[#71717A]">
+                Building a personalized step-by-step plan...
+              </p>
+            </div>
           </div>
           <div className="space-y-4">
             {Array.from({ length: 4 }).map((_, i) => (
-              <div
-                key={i}
-                className="flex gap-4 sm:gap-6"
-              >
-                <div className="h-9 w-9 shrink-0 animate-pulse rounded-full bg-zinc-100 dark:bg-zinc-800" />
-                <div className="flex-1 h-20 animate-pulse rounded-2xl bg-zinc-100 dark:bg-zinc-800" />
+              <div key={i} className="flex gap-6">
+                <div className="flex flex-col items-center">
+                  <div className="h-11 w-11 shrink-0 animate-pulse rounded-full bg-[#27272A]/50" />
+                  {i < 3 && <div className="w-0.5 flex-1 animate-pulse bg-[#27272A]/30 mt-2" />}
+                </div>
+                <div className="flex-1 h-20 animate-pulse rounded-2xl bg-[#27272A]/30" />
               </div>
             ))}
           </div>
+        </div>
+      )}
+
+      {/* Progress indicator */}
+      {phases.length > 0 && !isPending && (
+        <div className="flex items-center gap-2 rounded-xl border border-[#27272A]/60 bg-[#0F0F11] px-4 py-3">
+          <CheckCircle2 className="h-4 w-4 text-[#10B981]" />
+          <span className="text-xs font-medium text-[#A1A1AA]">
+            {phases.length} phases
+          </span>
+          <span className="text-[#3F3F46]">·</span>
+          <span className="text-xs text-[#71717A]">
+            Click any phase to expand details
+          </span>
         </div>
       )}
 
@@ -377,6 +526,7 @@ export default function RoadmapPage() {
               phase={phase}
               index={i}
               isLast={i === phases.length - 1}
+              total={phases.length}
               defaultOpen={i === 0}
             />
           ))}
@@ -385,8 +535,14 @@ export default function RoadmapPage() {
 
       {/* Fallback - full markdown */}
       {roadmapContent && phases.length === 0 && !isPending && (
-        <div className="rounded-2xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900 sm:p-8">
-          <div className="prose prose-zinc dark:prose-invert max-w-none">
+        <div className="overflow-hidden rounded-2xl border border-[#27272A]/60 bg-[#0F0F11] p-6 sm:p-8">
+          <div className="prose prose-sm max-w-none
+            prose-headings:text-white prose-headings:font-semibold
+            prose-p:text-[#A1A1AA] prose-p:leading-relaxed
+            prose-li:text-[#A1A1AA]
+            prose-strong:text-white
+            prose-code:text-xs prose-code:bg-[#27272A]/60 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded-md prose-code:text-[#A1A1AA]
+          ">
             <Markdown>{roadmapContent}</Markdown>
           </div>
         </div>
@@ -394,12 +550,30 @@ export default function RoadmapPage() {
 
       {/* Empty state */}
       {!roadmapContent && !isPending && !roadmapError && (
-        <div className="rounded-2xl border border-dashed border-zinc-200 bg-white/50 p-12 text-center dark:border-zinc-800 dark:bg-zinc-900/50">
-          <Map className="mx-auto h-10 w-10 text-zinc-300 dark:text-zinc-600" />
-          <p className="mt-3 text-sm text-zinc-500 dark:text-zinc-400">
+        <div className="flex flex-col items-center justify-center py-16 text-center">
+          <div className="relative mb-6">
+            <div className="absolute -inset-6 rounded-full bg-[#10B981]/8 blur-2xl" />
+            <div className="relative flex h-16 w-16 items-center justify-center rounded-2xl border border-[#27272A]/60 bg-[#111113]">
+              <Map className="h-7 w-7 text-[#71717A]" />
+            </div>
+          </div>
+          <h3 className="text-lg font-semibold text-white">
+            Ready to map your journey
+          </h3>
+          <p className="mt-2 max-w-sm text-sm text-[#71717A] leading-relaxed">
             Click &ldquo;Generate Roadmap&rdquo; to get your personalized
-            learning path.
+            learning path powered by AI.
           </p>
+          <Button
+            variant="primary"
+            size="md"
+            onClick={handleGenerate}
+            disabled={isPending}
+            className="mt-6 gap-2 px-6"
+          >
+            <Map className="h-4 w-4" />
+            Generate Roadmap
+          </Button>
         </div>
       )}
     </div>

@@ -1,16 +1,15 @@
 "use client";
 
-import React, { useState } from "react";
-import { usePathname } from "next/navigation";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useRouter, usePathname } from "next/navigation";
 import {
-  Bell,
   Search,
   Menu,
   LogOut,
-  Settings,
   User,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { searchItems, adminSearchItems } from "@/constants/search";
 
 interface HeaderProps {
   onMenuToggle: () => void;
@@ -18,9 +17,16 @@ interface HeaderProps {
 
 export default function Header({ onMenuToggle }: HeaderProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const { user, logout } = useAuth();
+
   const [showProfile, setShowProfile] = useState(false);
-  const [showNotifications, setShowNotifications] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [showSearch, setShowSearch] = useState(false);
+  const [selectedIndex, setSelectedIndex] = useState(0);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const searchContainerRef = useRef<HTMLDivElement>(null);
+  const profileRef = useRef<HTMLDivElement>(null);
 
   const getInitials = (name: string) =>
     name
@@ -40,139 +46,304 @@ export default function Header({ onMenuToggle }: HeaderProps) {
         return "Career Roadmap";
       case "/recommendation":
         return "Recommendations";
+      case "/profile":
+        return "My Profile";
+      case "/dashboard/manage-careers":
+        return "Manage Careers";
+      case "/dashboard/add-career":
+        return "Add Career";
       default:
         return "Console";
     }
   };
 
-  const notifications = [
-    { id: 1, title: "New Career Recommendation", desc: "An updated node has been added to your roadmap.", time: "2m ago" },
-    { id: 2, title: "Skills Assessment Complete", desc: "Your backend development skill score has been updated.", time: "1h ago" },
-  ];
+  const filteredResults = useMemo(() => {
+    const items = user?.role === "admin"
+      ? [...searchItems, ...adminSearchItems]
+      : searchItems;
+    if (!searchQuery.trim()) return items;
+    const q = searchQuery.toLowerCase();
+    return items.filter(
+      (item) =>
+        item.label.toLowerCase().includes(q) ||
+        item.description.toLowerCase().includes(q) ||
+        item.keywords.some((kw) => kw.includes(q))
+    );
+  }, [searchQuery, user?.role]);
+
+  const handleSearchSelect = useCallback(
+    (href: string) => {
+      setShowSearch(false);
+      setSearchQuery("");
+      router.push(href);
+    },
+    [router]
+  );
+
+  const handleSearchChange = useCallback((value: string) => {
+    setSearchQuery(value);
+    setSelectedIndex(0);
+  }, []);
+
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+        e.preventDefault();
+        setShowSearch((prev) => !prev);
+      }
+      if (e.key === "Escape") {
+        setShowSearch(false);
+        setSearchQuery("");
+      }
+    }
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
+  useEffect(() => {
+    if (showSearch) {
+      searchInputRef.current?.focus();
+    }
+  }, [showSearch]);
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (
+        searchContainerRef.current &&
+        !searchContainerRef.current.contains(e.target as Node)
+      ) {
+        setShowSearch(false);
+        setSearchQuery("");
+      }
+    }
+    if (showSearch) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () =>
+      document.removeEventListener("mousedown", handleClickOutside);
+  }, [showSearch]);
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (profileRef.current && !profileRef.current.contains(e.target as Node)) {
+        setShowProfile(false);
+      }
+    }
+    if (showProfile) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () =>
+      document.removeEventListener("mousedown", handleClickOutside);
+  }, [showProfile]);
+
+  function handleSearchKeyDown(e: React.KeyboardEvent) {
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setSelectedIndex((prev) =>
+        prev < filteredResults.length - 1 ? prev + 1 : 0
+      );
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setSelectedIndex((prev) =>
+        prev > 0 ? prev - 1 : filteredResults.length - 1
+      );
+    } else if (e.key === "Enter" && filteredResults[selectedIndex]) {
+      e.preventDefault();
+      handleSearchSelect(filteredResults[selectedIndex].href);
+    }
+  }
 
   const handleLogout = () => {
+    setShowProfile(false);
     logout();
   };
 
   return (
-    <header className="sticky top-0 z-40 flex h-16 w-full items-center justify-between border-b border-zinc-200 bg-white/70 px-4 backdrop-blur-md dark:border-zinc-900 dark:bg-zinc-950/70 sm:px-6">
-      {/* Left side: Hamburger (mobile) and page title */}
-      <div className="flex items-center gap-4">
-        <button
-          onClick={onMenuToggle}
-          className="flex h-10 w-10 items-center justify-center rounded-xl border border-zinc-200 text-zinc-500 hover:bg-zinc-50 dark:border-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-900 md:hidden"
-          aria-label="Toggle Navigation Sidebar"
-        >
-          <Menu className="h-5 w-5" />
-        </button>
-        <div className="hidden sm:block">
-          <h1 className="text-lg font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
-            {getPageTitle()}
-          </h1>
-        </div>
-      </div>
-
-      {/* Right side: Search, Notifications, Profile */}
-      <div className="flex items-center gap-4">
-        {/* Mock Search bar (Desktop) */}
-        <div className="relative hidden md:block w-64">
-          <span className="absolute inset-y-0 left-3 flex items-center text-zinc-400">
-            <Search className="h-4 w-4" />
-          </span>
-          <input
-            type="text"
-            placeholder="Search dashboard..."
-            className="w-full rounded-full border border-zinc-200 bg-zinc-50 py-1.5 pl-9 pr-4 text-xs text-zinc-900 placeholder:text-zinc-400 focus:border-zinc-300 focus:bg-white focus:outline-none focus:ring-1 focus:ring-zinc-300 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-50 dark:placeholder:text-zinc-500 dark:focus:border-zinc-700 dark:focus:bg-zinc-950 dark:focus:ring-zinc-700"
-          />
-        </div>
-
-        {/* Notification Bell */}
-        <div className="relative">
+    <>
+      <header className="sticky top-0 z-40 flex h-16 w-full items-center justify-between border-b border-[#27272A] bg-[#0A0A0A]/70 px-4 backdrop-blur-2xl sm:px-6">
+        <div className="flex items-center gap-4">
           <button
-            onClick={() => {
-              setShowNotifications(!showNotifications);
-              setShowProfile(false);
-            }}
-            className="relative flex h-10 w-10 items-center justify-center rounded-xl border border-zinc-200 text-zinc-500 hover:bg-zinc-50 hover:text-zinc-900 dark:border-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-900 dark:hover:text-zinc-50"
-            aria-label="Open notifications"
+            onClick={onMenuToggle}
+            className="flex h-10 w-10 items-center justify-center rounded-xl border border-[#27272A] bg-[#111111] text-[#A1A1AA] hover:bg-[#18181B] hover:text-white md:hidden"
+            aria-label="Toggle Navigation Sidebar"
           >
-            <Bell className="h-5 w-5" />
-            <span className="absolute top-2 right-2.5 h-2 w-2 rounded-full bg-indigo-600 dark:bg-indigo-400 animate-pulse" />
+            <Menu className="h-5 w-5" />
+          </button>
+          <div className="hidden sm:block">
+            <h1 className="text-lg font-semibold tracking-tight text-white">
+              {getPageTitle()}
+            </h1>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 sm:gap-4">
+          {/* Mobile Search Button */}
+          <button
+            onClick={() => setShowSearch(true)}
+            className="flex h-10 w-10 items-center justify-center rounded-xl border border-[#27272A] bg-[#111111] text-[#71717A] hover:text-[#A1A1AA] hover:bg-[#18181B] md:hidden"
+            aria-label="Search"
+          >
+            <Search className="h-5 w-5" />
           </button>
 
-          {/* Notifications Dropdown */}
-          {showNotifications && (
-            <div className="absolute right-0 mt-2 w-80 rounded-2xl border border-zinc-200 bg-white p-4 shadow-xl dark:border-zinc-800 dark:bg-zinc-900 animate-in fade-in slide-in-from-top-2 duration-200">
-              <div className="mb-3 flex items-center justify-between border-b border-zinc-100 pb-2 dark:border-zinc-800">
-                <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">Notifications</span>
-                <span className="rounded-full bg-indigo-50 px-2 py-0.5 text-2xs font-medium text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400">2 New</span>
-              </div>
-              <div className="space-y-3">
-                {notifications.map((n) => (
-                  <div key={n.id} className="group relative flex flex-col gap-1 rounded-xl p-2 transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800/40">
-                    <span className="text-xs font-semibold text-zinc-800 dark:text-zinc-200">{n.title}</span>
-                    <span className="text-2xs text-zinc-500 dark:text-zinc-400 leading-normal">{n.desc}</span>
-                    <span className="text-3xs font-medium text-zinc-400 dark:text-zinc-500 mt-1">{n.time}</span>
+          {/* Desktop Search Trigger */}
+          <button
+            onClick={() => setShowSearch(true)}
+            className="hidden md:flex h-10 w-64 items-center gap-2 rounded-full border border-[#27272A] bg-[#111111] px-4 text-xs text-[#71717A] transition-colors hover:text-[#A1A1AA] hover:bg-[#18181B]"
+          >
+            <Search className="h-4 w-4 shrink-0" />
+            Search dashboard...
+            <kbd className="ml-auto rounded border border-[#27272A] bg-[#18181B] px-1.5 py-0.5 text-3xs font-medium text-[#71717A]">
+              Ctrl K
+            </kbd>
+          </button>
+
+          {/* Profile Avatar */}
+          <div className="relative" ref={profileRef}>
+            <button
+              onClick={() => setShowProfile(!showProfile)}
+              className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-xl border border-[#27272A] bg-[#111111] hover:border-[#4F46E5]/40 focus:outline-none transition-all duration-200 active:scale-95"
+              aria-label="User menu"
+            >
+              {user?.photo ? (
+                <img
+                  src={user.photo}
+                  alt={user.fullName}
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center font-semibold text-xs text-[#A1A1AA] bg-[#18181B]">
+                  {user ? getInitials(user.fullName) : "?"}
+                </div>
+              )}
+            </button>
+
+            {showProfile && (
+              <div className="absolute right-0 mt-2 w-64 overflow-hidden rounded-2xl border border-[#27272A] bg-[#111111] shadow-xl animate-in fade-in slide-in-from-top-2 duration-200">
+                {/* User info */}
+                <div className="flex items-center gap-3 px-4 py-3.5">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#18181B]">
+                    {user?.photo ? (
+                      <img
+                        src={user.photo}
+                        alt={user.fullName}
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center font-semibold text-xs text-[#A1A1AA] bg-[#18181B]">
+                        {user ? getInitials(user.fullName) : "?"}
+                      </div>
+                    )}
                   </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-semibold text-white truncate">
+                      {user?.fullName || "Guest"}
+                    </p>
+                    <p className="text-xs text-[#A1A1AA] truncate">
+                      {user?.email || ""}
+                    </p>
+                  </div>
+                </div>
 
-        {/* Profile Avatar */}
-        <div className="relative">
-          <button
+                {/* Divider */}
+                <div className="h-px bg-[#27272A]" />
+
+                {/* Menu items */}
+                <div className="p-1.5">
+                  <button
+                    onClick={() => {
+                      setShowProfile(false);
+                      router.push("/profile");
+                    }}
+                    className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm text-[#A1A1AA] hover:bg-[#18181B] hover:text-white transition-colors"
+                  >
+                    <User className="h-4 w-4 text-[#71717A]" />
+                    My Profile
+                  </button>
+                  <button
+                    onClick={handleLogout}
+                    className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm text-rose-400 hover:bg-rose-500/10 transition-colors"
+                  >
+                    <LogOut className="h-4 w-4" />
+                    Sign Out
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </header>
+
+      {/* Search Overlay */}
+      {showSearch && (
+        <div className="fixed inset-0 z-50 flex items-start justify-center pt-[15vh]">
+          <div
+            className="fixed inset-0 bg-black/60 backdrop-blur-xs animate-in fade-in duration-150"
             onClick={() => {
-              setShowProfile(!showProfile);
-              setShowNotifications(false);
+              setShowSearch(false);
+              setSearchQuery("");
             }}
-            className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-xl border border-zinc-200 bg-zinc-100 hover:border-zinc-300 dark:border-zinc-800 dark:bg-zinc-800 focus:outline-none transition-all duration-200 active:scale-95"
-            aria-label="User profile settings"
+          />
+          <div
+            ref={searchContainerRef}
+            className="relative z-10 w-full max-w-lg overflow-hidden rounded-2xl border border-[#27272A] bg-[#111111] shadow-2xl animate-in fade-in zoom-in-95 slide-in-from-bottom-4 duration-200 mx-4"
           >
-            <div className="flex h-full w-full items-center justify-center font-semibold text-xs text-zinc-600 dark:text-zinc-300 bg-gradient-to-tr from-zinc-200 to-zinc-100 dark:from-zinc-800 dark:to-zinc-700">
-              {user ? getInitials(user.fullName) : "?"}
+            <div className="flex items-center gap-2 border-b border-[#27272A] px-4">
+              <Search className="h-4 w-4 text-[#71717A]" />
+              <input
+                ref={searchInputRef}
+                type="text"
+                placeholder="Type to search pages and features..."
+                value={searchQuery}
+                onChange={(e) => handleSearchChange(e.target.value)}
+                onKeyDown={handleSearchKeyDown}
+                className="flex-1 bg-transparent py-3.5 text-sm text-white placeholder:text-[#71717A] focus:outline-none"
+              />
+              <kbd className="rounded border border-[#27272A] bg-[#18181B] px-1.5 py-0.5 text-3xs font-medium text-[#71717A]">
+                ESC
+              </kbd>
             </div>
-          </button>
 
-          {/* Profile Dropdown Panel */}
-          {showProfile && (
-            <div className="absolute right-0 mt-2 w-56 rounded-2xl border border-zinc-200 bg-white p-2 shadow-xl dark:border-zinc-800 dark:bg-zinc-900 animate-in fade-in slide-in-from-top-2 duration-200">
-              {/* User details summary */}
-              <div className="px-3 py-2.5 border-b border-zinc-100 dark:border-zinc-800">
-                <p className="text-xs font-semibold text-zinc-900 dark:text-zinc-50">{user?.fullName || "Guest"}</p>
-                <p className="text-3xs text-zinc-400 dark:text-zinc-500 mt-0.5 truncate">{user?.email || ""}</p>
-              </div>
-
-              {/* Action buttons */}
-              <div className="mt-1 space-y-1">
-                <button
-                  onClick={() => setShowProfile(false)}
-                  className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-xs text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800/40 dark:hover:text-zinc-50 transition-colors"
-                >
-                  <User className="h-4 w-4" />
-                  My Profile
-                </button>
-                <button
-                  onClick={() => setShowProfile(false)}
-                  className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-xs text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800/40 dark:hover:text-zinc-50 transition-colors"
-                >
-                  <Settings className="h-4 w-4" />
-                  Settings
-                </button>
-                <hr className="border-zinc-100 dark:border-zinc-800 my-1" />
-                <button
-                  onClick={handleLogout}
-                  className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-xs text-rose-600 hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-950/20 transition-colors"
-                >
-                  <LogOut className="h-4 w-4" />
-                  Sign Out
-                </button>
-              </div>
+            <div className="max-h-80 overflow-y-auto p-2">
+              {filteredResults.length === 0 ? (
+                <div className="py-8 text-center">
+                  <p className="text-sm text-[#71717A]">
+                    No results found
+                  </p>
+                </div>
+              ) : (
+                filteredResults.map((item, i) => {
+                  const Icon = item.icon;
+                  return (
+                    <button
+                      key={item.href + item.label}
+                      onClick={() => handleSearchSelect(item.href)}
+                      onMouseEnter={() => setSelectedIndex(i)}
+                      className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-colors ${
+                        i === selectedIndex
+                          ? "bg-[#4F46E5]/10"
+                          : "hover:bg-[#18181B]"
+                      }`}
+                    >
+                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#18181B]">
+                        <Icon className="h-4 w-4 text-[#71717A]" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs font-medium text-white">
+                          {item.label}
+                        </p>
+                        <p className="text-3xs text-[#71717A] truncate">
+                          {item.description}
+                        </p>
+                      </div>
+                    </button>
+                  );
+                })
+              )}
             </div>
-          )}
+          </div>
         </div>
-      </div>
-    </header>
+      )}
+    </>
   );
 }

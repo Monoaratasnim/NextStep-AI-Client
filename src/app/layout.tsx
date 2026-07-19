@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import QueryProvider from "@/providers/QueryProvider";
 import { AuthProvider } from "@/hooks/useAuth";
+import { NotificationProvider } from "@/contexts/NotificationContext";
 import { Toaster } from "react-hot-toast";
 
 const inter = Inter({
@@ -27,7 +28,7 @@ export default function RootLayout({
           toastOptions={{
             duration: 4000,
             className:
-              "dark:bg-zinc-850 dark:text-zinc-50 dark:border dark:border-zinc-800 text-sm rounded-xl shadow-lg",
+              "bg-[#111111] text-white border border-[#27272A] text-sm rounded-xl shadow-lg",
             success: {
               iconTheme: {
                 primary: "#18181b",
@@ -37,7 +38,9 @@ export default function RootLayout({
           }}
         />
         <QueryProvider>
-          <AuthProvider>{children}</AuthProvider>
+          <AuthProvider>
+            <NotificationProvider>{children}</NotificationProvider>
+          </AuthProvider>
         </QueryProvider>
       </body>
     </html>

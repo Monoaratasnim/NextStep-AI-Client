@@ -23,16 +23,16 @@ export default function SelectField({
     <div className="space-y-1.5">
       <label
         htmlFor={fieldId}
-        className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
+        className="block text-sm font-medium text-[#A1A1AA]"
       >
         {label}
       </label>
       <select
         id={fieldId}
-        className={`w-full appearance-none rounded-xl border bg-white px-4 py-2.5 text-sm text-zinc-900 focus:outline-none focus:ring-2 focus:ring-offset-1 transition-colors duration-200 dark:bg-zinc-900 dark:text-zinc-50 ${
+        className={`w-full appearance-none rounded-xl bg-[#111111] border border-[#27272A] text-white placeholder:text-[#71717A] focus:outline-none focus:ring-2 focus:ring-offset-1 transition-colors duration-200 py-2.5 px-4 text-sm ${
           error
-            ? "border-rose-300 focus:border-rose-500 focus:ring-rose-500/20 dark:border-rose-700 dark:focus:border-rose-500 dark:focus:ring-rose-500/20"
-            : "border-zinc-200 focus:border-zinc-400 focus:ring-zinc-400/20 dark:border-zinc-800 dark:focus:border-zinc-600 dark:focus:ring-zinc-600/20"
+            ? "border-rose-500/50 focus:border-rose-500 focus:ring-rose-500/20"
+            : "focus:border-[#4F46E5] focus:ring-[#4F46E5]/20"
         } ${className}`}
         {...props}
       >
@@ -43,7 +43,7 @@ export default function SelectField({
         ))}
       </select>
       {error && (
-        <p className="text-xs text-rose-600 dark:text-rose-400">{error}</p>
+        <p className="text-xs text-rose-400">{error}</p>
       )}
     </div>
   );

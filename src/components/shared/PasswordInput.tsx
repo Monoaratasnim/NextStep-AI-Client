@@ -23,7 +23,7 @@ export default function PasswordInput({
     <div className="space-y-1.5">
       <label
         htmlFor={fieldId}
-        className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
+        className="block text-sm font-medium text-[#A1A1AA]"
       >
         {label}
       </label>
@@ -31,10 +31,10 @@ export default function PasswordInput({
         <input
           id={fieldId}
           type={visible ? "text" : "password"}
-          className={`w-full rounded-xl border bg-white px-4 py-2.5 pr-11 text-sm text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-offset-1 transition-all duration-200 dark:bg-zinc-900 dark:text-zinc-50 dark:placeholder:text-zinc-500 ${
+          className={`w-full rounded-xl bg-[#111111] border border-[#27272A] text-white placeholder:text-[#71717A] focus:outline-none focus:ring-2 focus:ring-offset-1 transition-all duration-200 py-2.5 px-4 pr-11 text-sm ${
             error
-              ? "border-rose-300 focus:border-rose-500 focus:ring-rose-500/20 dark:border-rose-700 dark:focus:border-rose-500 dark:focus:ring-rose-500/20"
-              : "border-zinc-200 focus:border-zinc-400 focus:ring-zinc-400/20 dark:border-zinc-800 dark:focus:border-zinc-600 dark:focus:ring-zinc-600/20"
+              ? "border-rose-500/50 focus:border-rose-500 focus:ring-rose-500/20"
+              : "focus:border-[#4F46E5] focus:ring-[#4F46E5]/20"
           } ${className}`}
           {...props}
         />
@@ -42,7 +42,7 @@ export default function PasswordInput({
           type="button"
           onClick={() => setVisible(!visible)}
           tabIndex={-1}
-          className="absolute inset-y-0 right-0 flex items-center pr-3 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors"
+          className="absolute inset-y-0 right-0 flex items-center pr-3 text-[#71717A] hover:text-white transition-colors"
           aria-label={visible ? "Hide password" : "Show password"}
         >
           {visible ? (
@@ -53,7 +53,7 @@ export default function PasswordInput({
         </button>
       </div>
       {error && (
-        <p className="text-xs text-rose-600 dark:text-rose-400">{error}</p>
+        <p className="text-xs text-rose-400">{error}</p>
       )}
     </div>
   );

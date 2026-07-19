@@ -81,15 +81,15 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="space-y-7">
+    <div className="space-y-6">
       <div className="space-y-2 text-center">
-        <div className="mx-auto mb-2 flex h-14 w-14 items-center justify-center rounded-2xl bg-zinc-900 text-white dark:bg-zinc-50 dark:text-zinc-950 shadow-lg shadow-zinc-900/20 dark:shadow-zinc-50/20">
+        <div className="mx-auto mb-2 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#4F46E5] text-white shadow-lg shadow-[#4F46E5]/20">
           <UserPlus className="h-6 w-6" />
         </div>
-        <h1 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
+        <h1 className="text-3xl font-bold tracking-tight text-white">
           Create your account
         </h1>
-        <p className="text-sm text-zinc-500 dark:text-zinc-400">
+        <p className="text-sm text-[#A1A1AA]">
           Start building your personalized career roadmap
         </p>
       </div>
@@ -142,7 +142,7 @@ export default function RegisterPage() {
               {...register("confirmPassword")}
             />
             {watchedConfirm && !errors.confirmPassword && (
-              <div className="flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400">
+              <div className="flex items-center gap-1.5 text-xs text-[#10B981]">
                 <Check className="h-3.5 w-3.5" />
                 {passwordsMatch
                   ? "Passwords match"
@@ -181,11 +181,11 @@ export default function RegisterPage() {
         </div>
       </AuthCard>
 
-      <p className="text-center text-sm text-zinc-500 dark:text-zinc-400">
+      <p className="text-center text-sm text-[#71717A]">
         Already have an account?{" "}
         <Link
           href="/login"
-          className="font-semibold text-zinc-900 hover:text-zinc-700 dark:text-zinc-50 dark:hover:text-zinc-300 transition-colors underline-offset-2 hover:underline"
+          className="font-semibold text-[#4F46E5] hover:text-[#6366F1] transition-colors underline-offset-2 hover:underline"
         >
           Sign in
         </Link>

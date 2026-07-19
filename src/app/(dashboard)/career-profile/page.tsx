@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { Suspense, useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -21,6 +22,7 @@ import {
   useCreateCareerProfile,
   useUpdateCareerProfile,
 } from "@/hooks/useCareerProfile";
+import { useNotifications } from "@/contexts/NotificationContext";
 import FormField from "@/components/shared/FormField";
 import SelectField from "@/components/shared/SelectField";
 import TagInput from "@/components/shared/TagInput";
@@ -51,9 +53,37 @@ const experienceOptions = [
 ];
 
 export default function CareerProfilePage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex flex-col items-center justify-center py-24">
+          <Loader2 className="h-8 w-8 animate-spin text-[#71717A]" />
+          <p className="mt-4 text-sm text-[#A1A1AA]">
+            Loading career profile...
+          </p>
+        </div>
+      }
+    >
+      <CareerProfileForm />
+    </Suspense>
+  );
+}
+
+function CareerProfileForm() {
+  const searchParams = useSearchParams();
+
+  const prefilledCareerGoal = searchParams.get("careerGoal") || "";
+  const prefilledIndustry = searchParams.get("preferredIndustry") || "";
+  const prefilledExperienceLevel = searchParams.get("experienceLevel") || "";
+  const prefilledSkills = searchParams.get("skills") || "";
+
+  const hasPrefill =
+    prefilledCareerGoal || prefilledIndustry || prefilledExperienceLevel || prefilledSkills;
+
   const { data: profile, isLoading, error } = useCareerProfile();
   const createMutation = useCreateCareerProfile();
   const updateMutation = useUpdateCareerProfile();
+  const { addNotification } = useNotifications();
 
   const isNotFound =
     error?.message === "Career profile not found";
@@ -76,13 +106,13 @@ export default function CareerProfilePage() {
   } = useForm<CareerValues>({
     resolver: zodResolver(careerSchema),
     defaultValues: {
-      careerGoal: "",
+      careerGoal: prefilledCareerGoal,
       currentRole: "",
       education: "",
-      experienceLevel: "Beginner",
-      skills: [],
+      experienceLevel: (prefilledExperienceLevel as "Beginner" | "Intermediate" | "Advanced") || "Beginner",
+      skills: prefilledSkills ? prefilledSkills.split(",").filter(Boolean) : [],
       interests: [],
-      preferredIndustry: "",
+      preferredIndustry: prefilledIndustry,
     },
   });
 
@@ -145,6 +175,11 @@ export default function CareerProfilePage() {
       if (mode === "create") {
         await createMutation.mutateAsync(payload);
         toast.success("Career profile created!");
+        addNotification({
+          type: "profile",
+          title: "Profile Created",
+          description: "Your career profile has been created successfully.",
+        });
         setMode("view");
       } else {
         await updateMutation.mutateAsync(payload);
@@ -166,8 +201,8 @@ export default function CareerProfilePage() {
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center py-24">
-        <Loader2 className="h-8 w-8 animate-spin text-zinc-400" />
-        <p className="mt-4 text-sm text-zinc-500 dark:text-zinc-400">
+        <Loader2 className="h-8 w-8 animate-spin text-[#71717A]" />
+        <p className="mt-4 text-sm text-[#A1A1AA]">
           Loading career profile...
         </p>
       </div>
@@ -177,13 +212,13 @@ export default function CareerProfilePage() {
   if (error && !isNotFound) {
     return (
       <div className="flex flex-col items-center justify-center py-24 text-center">
-        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-rose-100 dark:bg-rose-950/30">
-          <AlertCircle className="h-7 w-7 text-rose-600 dark:text-rose-400" />
+        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-rose-950/30">
+          <AlertCircle className="h-7 w-7 text-rose-400" />
         </div>
-        <h3 className="mt-4 text-lg font-semibold text-zinc-900 dark:text-zinc-50">
+        <h3 className="mt-4 text-lg font-semibold text-white">
           Something went wrong
         </h3>
-        <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+        <p className="mt-1 text-sm text-[#A1A1AA]">
           {error.message}
         </p>
       </div>
@@ -195,10 +230,10 @@ export default function CareerProfilePage() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
+            <h2 className="text-2xl font-bold tracking-tight text-white">
               Career Profile
             </h2>
-            <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+            <p className="mt-1 text-sm text-[#A1A1AA]">
               Your career goals, skills, and preferences.
             </p>
           </div>
@@ -245,8 +280,8 @@ export default function CareerProfilePage() {
           />
         )}
 
-        <div className="rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
-          <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50 mb-3">
+        <div className="rounded-2xl border border-[#27272A] bg-[#111111] p-5">
+          <h3 className="text-sm font-semibold text-white mb-3">
             Skills
           </h3>
           <div className="flex flex-wrap gap-2">
@@ -254,21 +289,21 @@ export default function CareerProfilePage() {
               profile.skills.map((skill) => (
                 <span
                   key={skill}
-                  className="inline-flex rounded-lg bg-indigo-50 px-3 py-1.5 text-xs font-medium text-indigo-700 dark:bg-indigo-950/30 dark:text-indigo-300"
+                  className="inline-flex rounded-lg bg-[#4F46E5]/10 px-3 py-1.5 text-xs font-medium text-[#4F46E5]"
                 >
                   {skill}
                 </span>
               ))
             ) : (
-              <p className="text-sm text-zinc-400 dark:text-zinc-500">
+              <p className="text-sm text-[#71717A]">
                 No skills added yet.
               </p>
             )}
           </div>
         </div>
 
-        <div className="rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
-          <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50 mb-3">
+        <div className="rounded-2xl border border-[#27272A] bg-[#111111] p-5">
+          <h3 className="text-sm font-semibold text-white mb-3">
             Interests
           </h3>
           <div className="flex flex-wrap gap-2">
@@ -276,13 +311,13 @@ export default function CareerProfilePage() {
               profile.interests.map((interest) => (
                 <span
                   key={interest}
-                  className="inline-flex rounded-lg bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-300"
+                  className="inline-flex rounded-lg bg-[#10B981]/10 px-3 py-1.5 text-xs font-medium text-[#10B981]"
                 >
                   {interest}
                 </span>
               ))
             ) : (
-              <p className="text-sm text-zinc-400 dark:text-zinc-500">
+              <p className="text-sm text-[#71717A]">
                 No interests added yet.
               </p>
             )}
@@ -296,12 +331,12 @@ export default function CareerProfilePage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
+          <h2 className="text-2xl font-bold tracking-tight text-white">
             {mode === "create"
               ? "Create Career Profile"
               : "Edit Career Profile"}
           </h2>
-          <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+          <p className="mt-1 text-sm text-[#A1A1AA]">
             Tell us about your career goals and skills.
           </p>
         </div>
@@ -318,9 +353,16 @@ export default function CareerProfilePage() {
         )}
       </div>
 
+      {hasPrefill && mode === "create" && (
+        <div className="rounded-2xl border border-[#4F46E5]/20 bg-[#4F46E5]/10 p-4 text-sm text-[#4F46E5]">
+          Some fields have been prefilled from the Career Library. Review and
+          complete the rest before submitting.
+        </div>
+      )}
+
       <form
         onSubmit={handleSubmit(onSubmit)}
-        className="space-y-6 rounded-2xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900 sm:p-8"
+        className="space-y-6 rounded-2xl border border-[#27272A] bg-[#111111] p-6 sm:p-8"
       >
         <FormField
           label="Career Goal"
@@ -423,17 +465,17 @@ function InfoCard({
 }) {
   return (
     <div
-      className={`rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900 ${
+      className={`rounded-2xl border border-[#27272A] bg-[#111111] p-5 ${
         fullWidth ? "sm:col-span-2" : ""
       }`}
     >
       <div className="flex items-center gap-2 mb-2">
-        <Icon className="h-4 w-4 text-zinc-400 dark:text-zinc-500" />
-        <span className="text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+        <Icon className="h-4 w-4 text-[#71717A]" />
+        <span className="text-xs font-medium uppercase tracking-wider text-[#71717A]">
           {label}
         </span>
       </div>
-      <p className="text-sm font-medium text-zinc-900 dark:text-zinc-50">
+      <p className="text-sm font-medium text-white">
         {value}
       </p>
     </div>

@@ -16,17 +16,17 @@ export default function Button({
   ...props
 }: ButtonProps) {
   const baseStyles =
-    "inline-flex items-center justify-center font-medium rounded-full transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-zinc-400 focus:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none active:scale-[0.98]";
+    "inline-flex items-center justify-center font-medium rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[#4F46E5]/40 focus:ring-offset-2 focus:ring-offset-black disabled:opacity-50 disabled:pointer-events-none active:scale-[0.98]";
 
   const variants = {
     primary:
-      "bg-zinc-900 text-white hover:bg-zinc-800 dark:bg-zinc-50 dark:text-zinc-950 dark:hover:bg-zinc-200 shadow-sm hover:shadow-md",
+      "bg-[#4F46E5] text-white hover:bg-[#4338CA] shadow-sm hover:shadow-md hover:shadow-[#4F46E5]/20",
     secondary:
-      "bg-zinc-100 text-zinc-900 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-50 dark:hover:bg-zinc-700",
+      "bg-[#18181B] text-[#A1A1AA] hover:bg-[#27272A] hover:text-white border border-[#27272A]",
     outline:
-      "border border-zinc-200 bg-transparent text-zinc-900 hover:bg-zinc-50 dark:border-zinc-800 dark:text-zinc-50 dark:hover:bg-zinc-900/50",
+      "border border-[#27272A] bg-transparent text-[#A1A1AA] hover:bg-[#111111] hover:text-white hover:border-[#3F3F46]",
     ghost:
-      "bg-transparent text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-900 dark:hover:text-zinc-50",
+      "bg-transparent text-[#A1A1AA] hover:bg-[#111111] hover:text-white",
   };
 
   const sizes = {

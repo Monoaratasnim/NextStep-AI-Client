@@ -1,13 +1,13 @@
 "use client";
 
-import React, { Suspense, useState } from "react";
+import React, { Suspense, useCallback, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "react-hot-toast";
-import { Loader2, ArrowRight, Mail } from "lucide-react";
+import { Loader2, ArrowRight, Mail, User, Shield } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { DEFAULT_LOGIN_REDIRECT } from "@/constants";
 import FormField from "@/components/shared/FormField";
@@ -24,6 +24,29 @@ const loginSchema = z.object({
 
 type LoginValues = z.infer<typeof loginSchema>;
 
+const demoAccounts = [
+  {
+    label: "Demo Admin",
+    icon: Shield,
+    email: "admin@gmail.com",
+    password: "Admin@123",
+    color: "text-[#4F46E5]",
+    bg: "bg-[#4F46E5]/10",
+    hoverBg: "hover:bg-[#4F46E5]/20",
+    border: "border-[#4F46E5]/20",
+  },
+  {
+    label: "Demo User",
+    icon: User,
+    email: "demo.user@gmail.com",
+    password: "User@123",
+    color: "text-[#10B981]",
+    bg: "bg-[#10B981]/10",
+    hoverBg: "hover:bg-[#10B981]/20",
+    border: "border-[#10B981]/20",
+  },
+];
+
 function LoginForm() {
   const searchParams = useSearchParams();
   const { login } = useAuth();
@@ -35,13 +58,14 @@ function LoginForm() {
   const {
     register,
     handleSubmit,
+    setValue,
     formState: { errors },
   } = useForm<LoginValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: { email: "", password: "" },
   });
 
-  const onSubmit = async (values: LoginValues) => {
+  const onSubmit = useCallback(async (values: LoginValues) => {
     setIsSubmitting(true);
     try {
       await login(values, callbackUrl);
@@ -55,18 +79,28 @@ function LoginForm() {
     } finally {
       setIsSubmitting(false);
     }
-  };
+  }, [login, callbackUrl]);
+
+  const handleDemoLogin = useCallback(
+    async (email: string, password: string) => {
+      setValue("email", email, { shouldValidate: true });
+      setValue("password", password, { shouldValidate: true });
+      await new Promise((r) => setTimeout(r, 50));
+      handleSubmit(onSubmit)();
+    },
+    [setValue, handleSubmit, onSubmit]
+  );
 
   return (
-    <div className="space-y-7">
+    <div className="space-y-6">
       <div className="space-y-2 text-center">
-        <div className="mx-auto mb-2 flex h-14 w-14 items-center justify-center rounded-2xl bg-zinc-900 text-white dark:bg-zinc-50 dark:text-zinc-950 shadow-lg shadow-zinc-900/20 dark:shadow-zinc-50/20">
+        <div className="mx-auto mb-2 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#4F46E5] text-white shadow-lg shadow-[#4F46E5]/20">
           <Mail className="h-6 w-6" />
         </div>
-        <h1 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
+        <h1 className="text-3xl font-bold tracking-tight text-white">
           Welcome back
         </h1>
-        <p className="text-sm text-zinc-500 dark:text-zinc-400">
+        <p className="text-sm text-[#A1A1AA]">
           Sign in to continue to your career dashboard
         </p>
       </div>
@@ -77,17 +111,15 @@ function LoginForm() {
           className="space-y-5"
           noValidate
         >
-          <div className="space-y-1.5">
-            <FormField
-              label="Email"
-              type="email"
-              placeholder="you@example.com"
-              autoComplete="email"
-              disabled={isSubmitting}
-              error={errors.email?.message}
-              {...register("email")}
-            />
-          </div>
+          <FormField
+            label="Email"
+            type="email"
+            placeholder="you@example.com"
+            autoComplete="email"
+            disabled={isSubmitting}
+            error={errors.email?.message}
+            {...register("email")}
+          />
 
           <PasswordInput
             label="Password"
@@ -126,13 +158,34 @@ function LoginForm() {
         <div className="mt-6">
           <GoogleLoginButton redirectTo={callbackUrl} />
         </div>
+
+        {/* Demo Accounts */}
+        <div className="mt-6 space-y-3">
+          <p className="text-center text-xs font-medium uppercase tracking-wider text-[#71717A]">
+            Quick demo access
+          </p>
+          <div className="grid grid-cols-2 gap-3">
+            {demoAccounts.map((demo) => (
+              <button
+                key={demo.label}
+                type="button"
+                onClick={() => handleDemoLogin(demo.email, demo.password)}
+                disabled={isSubmitting}
+                className={`flex items-center justify-center gap-2 rounded-xl border ${demo.border} ${demo.bg} ${demo.hoverBg} px-3 py-2.5 text-xs font-medium ${demo.color} transition-all duration-200 disabled:opacity-50 disabled:pointer-events-none`}
+              >
+                <demo.icon className="h-3.5 w-3.5" />
+                {demo.label}
+              </button>
+            ))}
+          </div>
+        </div>
       </AuthCard>
 
-      <p className="text-center text-sm text-zinc-500 dark:text-zinc-400">
+      <p className="text-center text-sm text-[#71717A]">
         Don&apos;t have an account?{" "}
         <Link
           href="/register"
-          className="font-semibold text-zinc-900 hover:text-zinc-700 dark:text-zinc-50 dark:hover:text-zinc-300 transition-colors underline-offset-2 hover:underline"
+          className="font-semibold text-[#4F46E5] hover:text-[#6366F1] transition-colors underline-offset-2 hover:underline"
         >
           Create one
         </Link>
@@ -146,7 +199,7 @@ export default function LoginPage() {
     <Suspense
       fallback={
         <div className="flex items-center justify-center py-20">
-          <Loader2 className="h-6 w-6 animate-spin text-zinc-400" />
+          <Loader2 className="h-6 w-6 animate-spin text-[#71717A]" />
         </div>
       }
     >

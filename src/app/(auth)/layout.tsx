@@ -23,12 +23,12 @@ export default function AuthLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="relative flex min-h-screen w-screen bg-zinc-50 dark:bg-zinc-950">
+    <div className="relative flex min-h-screen w-full bg-black">
       {/* Back to Home Button */}
       <div className="absolute top-6 left-6 z-30 md:left-auto md:right-6 lg:right-8">
         <Link
           href="/"
-          className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-xs font-semibold text-white shadow-sm backdrop-blur-md transition-all duration-200 hover:bg-white/20 hover:scale-105 md:border-zinc-200/80 md:bg-white/80 md:text-zinc-600 md:hover:bg-zinc-50 md:hover:text-zinc-950 dark:md:border-zinc-800/80 dark:md:bg-zinc-900/80 dark:md:text-zinc-400 dark:md:hover:bg-zinc-800 dark:md:hover:text-zinc-50"
+          className="inline-flex items-center gap-2 rounded-full bg-[#111111] border border-[#27272A] px-4 py-2 text-xs font-semibold text-[#A1A1AA] transition-all duration-200 hover:bg-[#27272A] hover:text-white md:bg-[#111111]"
         >
           <ArrowLeft className="h-3.5 w-3.5" />
           Back to Home
@@ -36,26 +36,25 @@ export default function AuthLayout({
       </div>
 
       {/* Left Panel: Branding */}
-      <div className="relative hidden w-1/2 flex-col justify-between overflow-hidden bg-gradient-to-br from-zinc-950 via-zinc-900 to-indigo-950 p-12 text-white lg:flex">
+      <div className="relative hidden w-1/2 flex-col justify-between overflow-hidden bg-gradient-to-br from-[#0A0A0A] via-[#111111] to-[#4F46E5]/10 p-12 text-white lg:flex">
         {/* Animated gradient background */}
         <div className="absolute inset-0 z-0">
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-indigo-500/15 via-transparent to-transparent" />
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,_var(--tw-gradient-stops))] from-purple-500/10 via-transparent to-transparent" />
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-[#4F46E5]/15 via-transparent to-transparent" />
         </div>
 
         {/* Floating decorative elements */}
-        <div className="absolute top-20 left-10 h-72 w-72 rounded-full bg-purple-500/10 blur-3xl animate-pulse" />
-        <div className="absolute bottom-32 right-10 h-64 w-64 rounded-full bg-indigo-500/10 blur-3xl animate-pulse [animation-delay:1s]" />
-        <div className="absolute top-1/2 left-1/3 h-48 w-48 rounded-full bg-blue-500/5 blur-3xl animate-pulse [animation-delay:2s]" />
+        <div className="absolute top-20 left-10 h-72 w-72 rounded-full bg-[#4F46E5]/10 blur-3xl animate-pulse" />
+        <div className="absolute bottom-32 right-10 h-64 w-64 rounded-full bg-[#4F46E5]/10 blur-3xl animate-pulse [animation-delay:1s]" />
+        <div className="absolute top-1/2 left-1/3 h-48 w-48 rounded-full bg-[#4F46E5]/5 blur-3xl animate-pulse [animation-delay:2s]" />
 
         {/* Brand Logo */}
         <div className="relative z-10">
           <Link href="/" className="flex items-center gap-2.5 group w-fit">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-zinc-950 transition-all duration-300 group-hover:rotate-12 group-hover:scale-110">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#4F46E5] text-white transition-all duration-300 group-hover:rotate-12 group-hover:scale-110">
               <Sparkles className="h-5 w-5" />
             </div>
             <span className="text-xl font-bold tracking-tight text-white">
-              NextStep<span className="text-zinc-400">AI</span>
+              NextStep<span className="text-[#71717A]">AI</span>
             </span>
           </Link>
         </div>
@@ -65,12 +64,12 @@ export default function AuthLayout({
           <div className="space-y-4">
             <h2 className="text-3xl font-bold leading-tight tracking-tight text-white">
               Shape your future with{" "}
-              <span className="bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-[#4F46E5] to-[#6366F1] bg-clip-text text-transparent">
                 AI-driven
               </span>{" "}
               career guidance
             </h2>
-            <p className="text-base leading-relaxed text-zinc-400">
+            <p className="text-base leading-relaxed text-[#71717A]">
               Get a personalized roadmap, skill recommendations, and milestones
               crafted specifically for your career goals.
             </p>
@@ -80,12 +79,12 @@ export default function AuthLayout({
             {features.map((f, i) => (
               <div
                 key={i}
-                className="flex items-center gap-3.5 rounded-2xl border border-white/5 bg-white/5 px-4 py-3 backdrop-blur-sm transition-all duration-200 hover:bg-white/10 hover:border-white/10"
+                className="flex items-center gap-3.5 rounded-2xl border border-[#27272A] bg-[#111111] px-4 py-3 transition-all duration-200 hover:bg-[#27272A]"
               >
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/10">
-                  <f.icon className="h-5 w-5 text-indigo-300" />
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#4F46E5]/10">
+                  <f.icon className="h-5 w-5 text-[#4F46E5]" />
                 </div>
-                <span className="text-sm font-medium text-zinc-300">
+                <span className="text-sm font-medium text-[#A1A1AA]">
                   {f.label}
                 </span>
               </div>
@@ -95,7 +94,7 @@ export default function AuthLayout({
 
         {/* Testimonial */}
         <div className="relative z-10 max-w-md space-y-6">
-          <div className="rounded-2xl border border-white/5 bg-white/5 p-5 backdrop-blur-sm">
+          <div className="rounded-2xl border border-[#27272A] bg-[#111111] p-5">
             <div className="mb-3 flex gap-0.5">
               {Array.from({ length: 5 }).map((_, i) => (
                 <svg
@@ -108,27 +107,27 @@ export default function AuthLayout({
                 </svg>
               ))}
             </div>
-            <Quote className="mb-2 h-5 w-5 text-zinc-600" />
-            <p className="text-sm leading-relaxed text-zinc-300 italic">
+            <Quote className="mb-2 h-5 w-5 text-[#71717A]" />
+            <p className="text-sm leading-relaxed text-[#A1A1AA] italic">
               &ldquo;NextStep AI took the guesswork out of my career transition.
               The AI recommendations map out precisely what skills I need to
               acquire to land a Staff Engineer role.&rdquo;
             </p>
-            <footer className="mt-3 text-xs font-semibold tracking-wide text-zinc-500">
+            <footer className="mt-3 text-xs font-semibold tracking-wide text-[#71717A]">
               &mdash; Sarah Jenkins, Staff Software Engineer
             </footer>
           </div>
         </div>
 
         {/* Footer */}
-        <div className="relative z-10 text-xs text-zinc-600">
+        <div className="relative z-10 text-xs text-[#71717A]">
           &copy; {new Date().getFullYear()} NextStep AI. Empowering careers
           globally.
         </div>
       </div>
 
       {/* Right Panel: Form Area */}
-      <div className="flex w-full flex-col justify-center px-6 py-16 sm:px-12 lg:w-1/2 lg:px-16 xl:px-24">
+      <div className="flex w-full flex-col justify-center px-6 py-16 sm:px-12 lg:w-1/2 lg:px-16 xl:px-24 bg-black">
         <div className="mx-auto w-full max-w-md animate-in fade-in slide-in-from-bottom-4 duration-500">
           {children}
         </div>

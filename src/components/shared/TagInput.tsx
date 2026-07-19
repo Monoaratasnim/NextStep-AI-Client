@@ -46,27 +46,27 @@ export default function TagInput({
 
   return (
     <div className="space-y-1.5">
-      <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+      <label className="block text-sm font-medium text-[#A1A1AA]">
         {label}
       </label>
       <div
-        className={`flex min-h-[42px] flex-wrap items-center gap-1.5 rounded-xl border bg-white px-3 py-2 transition-colors duration-200 dark:bg-zinc-900 ${
+        className={`flex min-h-[42px] flex-wrap items-center gap-1.5 rounded-xl bg-[#111111] border border-[#27272A] px-3 py-2 transition-colors duration-200 ${
           error
-            ? "border-rose-300 dark:border-rose-700"
-            : "border-zinc-200 focus-within:border-zinc-400 focus-within:ring-2 focus-within:ring-zinc-400/20 focus-within:ring-offset-1 dark:border-zinc-800 dark:focus-within:border-zinc-600 dark:focus-within:ring-zinc-600/20"
+            ? "border-rose-500/50"
+            : "focus-within:border-[#4F46E5] focus-within:ring-2 focus-within:ring-[#4F46E5]/20 focus-within:ring-offset-1"
         }`}
       >
         {tags.map((tag) => (
           <span
             key={tag}
-            className="inline-flex items-center gap-1 rounded-lg bg-zinc-100 px-2.5 py-1 text-xs font-medium text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
+            className="inline-flex items-center gap-1 rounded-lg bg-[#4F46E5]/10 px-2.5 py-1 text-xs font-medium text-[#4F46E5]"
           >
             {tag}
             {!disabled && (
               <button
                 type="button"
                 onClick={() => removeTag(tag)}
-                className="ml-0.5 rounded-full p-0.5 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 transition-colors"
+                className="ml-0.5 rounded-full p-0.5 text-[#71717A] hover:text-white transition-colors"
                 aria-label={`Remove ${tag}`}
               >
                 <X className="h-3 w-3" />
@@ -81,7 +81,7 @@ export default function TagInput({
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder={tags.length === 0 ? placeholder : ""}
-            className="min-w-[120px] flex-1 bg-transparent py-1 text-sm text-zinc-900 placeholder:text-zinc-400 focus:outline-none dark:text-zinc-50 dark:placeholder:text-zinc-500"
+            className="min-w-[120px] flex-1 bg-transparent py-1 text-sm text-white placeholder:text-[#71717A] focus:outline-none"
           />
         )}
       </div>
@@ -90,14 +90,14 @@ export default function TagInput({
           type="button"
           onClick={addTag}
           disabled={!input.trim()}
-          className="flex items-center gap-1 text-xs text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200 transition-colors disabled:opacity-40 disabled:pointer-events-none"
+          className="flex items-center gap-1 text-xs text-[#71717A] hover:text-white transition-colors disabled:opacity-40 disabled:pointer-events-none"
         >
           <Plus className="h-3 w-3" />
           Add
         </button>
       )}
       {error && (
-        <p className="text-xs text-rose-600 dark:text-rose-400">{error}</p>
+        <p className="text-xs text-rose-400">{error}</p>
       )}
     </div>
   );
