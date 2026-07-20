@@ -84,18 +84,19 @@ export default function TagInput({
             className="min-w-[120px] flex-1 bg-transparent py-1 text-sm text-white placeholder:text-[#71717A] focus:outline-none"
           />
         )}
+        {!disabled && (
+          <button
+            type="button"
+            onClick={addTag}
+            disabled={!input.trim()}
+            className="inline-flex shrink-0 items-center gap-1 rounded-lg bg-[#18181B] px-2 py-1 text-xs font-medium text-[#71717A] transition-colors hover:bg-[#27272A] hover:text-white disabled:opacity-30 disabled:pointer-events-none"
+            aria-label="Add tag"
+          >
+            <Plus className="h-3 w-3" />
+            Add
+          </button>
+        )}
       </div>
-      {!disabled && tags.length > 0 && (
-        <button
-          type="button"
-          onClick={addTag}
-          disabled={!input.trim()}
-          className="flex items-center gap-1 text-xs text-[#71717A] hover:text-white transition-colors disabled:opacity-40 disabled:pointer-events-none"
-        >
-          <Plus className="h-3 w-3" />
-          Add
-        </button>
-      )}
       {error && (
         <p className="text-xs text-rose-400">{error}</p>
       )}
