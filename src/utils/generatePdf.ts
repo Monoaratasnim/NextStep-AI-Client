@@ -38,75 +38,33 @@ function addFooter(doc: jsPDF) {
   }
 }
 
-function parseInlineFormatting(text: string): { text: string; hasBold: boolean } {
-  const hasBold = text.includes("**");
-  return { text: text.replace(/\*\*/g, ""), hasBold };
-}
-
 function renderFormattedText(
   doc: jsPDF,
   text: string,
   x: number,
   y: number,
   baseFontSize: number,
-  baseColor: [number, number, number]
+  baseColor: [number, number, number],
+  maxWidth?: number
 ): number {
-  const parts = text.split(/(\*\*[^*]+\*\*)/g);
+  const pageHeight = doc.internal.pageSize.getHeight();
+  const maxContentY = pageHeight - 25;
+  const width = maxWidth ?? CONTENT_WIDTH - (x - MARGIN.left);
+  const lineHeight = baseFontSize * 0.7;
+  const cleanText = text.replace(/\*\*/g, "").replace(/`/g, "");
+  const lines = doc.splitTextToSize(cleanText, width);
 
-  let currentX = x;
-
-  for (const part of parts) {
-    if (!part) continue;
-
-    if (part.startsWith("**") && part.endsWith("**")) {
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(baseFontSize);
-      doc.setTextColor(...baseColor);
-    } else {
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(baseFontSize);
-      doc.setTextColor(...baseColor);
-    }
-
-    const cleanPart = part.replace(/\*\*/g, "").replace(/`/g, "");
-    const wrappedLines = doc.splitTextToSize(cleanPart, CONTENT_WIDTH - (currentX - MARGIN.left));
-
-    if (wrappedLines.length > 1) {
-      doc.text([wrappedLines[0]], currentX, y);
-      const firstLineWidth =
-        doc.getTextWidth(wrappedLines[0]);
-      currentX += firstLineWidth;
-
-      for (let i = 1; i < wrappedLines.length; i++) {
-        y += baseFontSize * 0.4;
-        if (y > doc.internal.pageSize.getHeight() - 25) {
-          doc.addPage();
-          y = MARGIN.top;
-        }
-        if (i === wrappedLines.length - 1) {
-          doc.text([wrappedLines[i]], MARGIN.left, y);
-          currentX = MARGIN.left + doc.getTextWidth(wrappedLines[i]);
-        } else {
-          doc.text([wrappedLines[i]], MARGIN.left, y);
-          currentX = MARGIN.left + doc.getTextWidth(wrappedLines[i]);
-        }
-      }
-    } else {
-      const width = doc.getTextWidth(cleanPart);
-      if (currentX + width > PAGE_WIDTH - MARGIN.right) {
-        y += baseFontSize * 0.4;
-        currentX = MARGIN.left;
-        if (y > doc.internal.pageSize.getHeight() - 25) {
-          doc.addPage();
-          y = MARGIN.top;
-        }
-      }
-      doc.text(cleanPart, currentX, y);
-      currentX += width;
-    }
+  if (y + lines.length * lineHeight > maxContentY) {
+    doc.addPage();
+    y = MARGIN.top;
   }
 
-  return y;
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(baseFontSize);
+  doc.setTextColor(...baseColor);
+  doc.text(lines, x, y);
+
+  return y + lines.length * lineHeight;
 }
 
 export function generatePdf(
@@ -390,18 +348,25 @@ export function generatePdf(
     // Bullet list
     if (line.trim().startsWith("- ") || line.trim().startsWith("* ")) {
       const bulletText = line.trim().replace(/^[-*]\s+/, "");
-      const { text: cleanText } = parseInlineFormatting(bulletText);
+      const cleanText = bulletText.replace(/\*\*/g, "").replace(/`/g, "");
+
+      const textX = MARGIN.left + 8;
+      const textWidth = CONTENT_WIDTH - 8;
+      const lineHeight = 10 * 0.7;
+      const wrappedLines = doc.splitTextToSize(cleanText, textWidth);
+
+      if (y + wrappedLines.length * lineHeight > maxContentY) {
+        doc.addPage();
+        y = MARGIN.top;
+      }
 
       doc.setFont("helvetica", "normal");
       doc.setFontSize(10);
       doc.setTextColor(...COLORS.black);
-
-      const textX = MARGIN.left + 8;
-
       doc.text("•", MARGIN.left + 2, y);
+      doc.text(wrappedLines, textX, y);
 
-      y = renderFormattedText(doc, cleanText, textX, y, 10, COLORS.black);
-      y += 1;
+      y += wrappedLines.length * lineHeight + 3.5;
       i++;
       continue;
     }
@@ -411,23 +376,30 @@ export function generatePdf(
       const match = line.trim().match(/^(\d+[\.\)]\s+)(.*)/);
       if (match) {
         const number = match[1];
-        const text = match[2];
+        const cleanText = match[2].replace(/\*\*/g, "").replace(/`/g, "");
+
+        const numberWidth = doc.getTextWidth(number);
+        const textX = MARGIN.left + 4 + numberWidth;
+        const textWidth = CONTENT_WIDTH - (textX - MARGIN.left);
+        const lineHeight = 10 * 0.7;
+        const wrappedLines = doc.splitTextToSize(cleanText, textWidth);
+
+        if (y + wrappedLines.length * lineHeight > maxContentY) {
+          doc.addPage();
+          y = MARGIN.top;
+        }
 
         doc.setFont("helvetica", "bold");
         doc.setFontSize(10);
         doc.setTextColor(...COLORS.primary);
         doc.text(number, MARGIN.left + 2, y);
 
-        const numberWidth = doc.getTextWidth(number);
-        y = renderFormattedText(
-          doc,
-          text.replace(/\*\*/g, ""),
-          MARGIN.left + 4 + numberWidth,
-          y,
-          10,
-          COLORS.black
-        );
-        y += 1;
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(10);
+        doc.setTextColor(...COLORS.black);
+        doc.text(wrappedLines, textX, y);
+
+        y += wrappedLines.length * lineHeight + 1;
       }
       i++;
       continue;
@@ -437,6 +409,14 @@ export function generatePdf(
     if (line.trim().startsWith("> ")) {
       const quoteText = line.trim().replace(/^>\s+/, "").replace(/\*\*/g, "");
       const quoteX = MARGIN.left + 6;
+      const quoteWidth = CONTENT_WIDTH - 10;
+      const lineHeight = 10 * 0.7;
+      const quoteLines = doc.splitTextToSize(quoteText, quoteWidth);
+
+      if (y + quoteLines.length * lineHeight > maxContentY) {
+        doc.addPage();
+        y = MARGIN.top;
+      }
 
       doc.setFillColor(...COLORS.primary);
       doc.rect(MARGIN.left, y - 3, 1.5, 5, "F");
@@ -444,25 +424,15 @@ export function generatePdf(
       doc.setFont("helvetica", "italic");
       doc.setFontSize(10);
       doc.setTextColor(...COLORS.gray);
-      const quoteLines = doc.splitTextToSize(quoteText, CONTENT_WIDTH - 10);
       doc.text(quoteLines, quoteX, y);
-      y += quoteLines.length * 4.5 + 3;
+      y += quoteLines.length * lineHeight + 3;
       i++;
       continue;
     }
 
     // Regular paragraph
-    const { text: cleanText, hasBold } = parseInlineFormatting(line);
-    if (hasBold) {
-      y = renderFormattedText(doc, cleanText, MARGIN.left, y, 10, COLORS.black);
-    } else {
-      const paraLines = doc.splitTextToSize(cleanText, CONTENT_WIDTH);
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(10);
-      doc.setTextColor(...COLORS.black);
-      doc.text(paraLines, MARGIN.left, y);
-      y += paraLines.length * 4.5;
-    }
+    const cleanText = line.replace(/\*\*/g, "").replace(/`/g, "");
+    y = renderFormattedText(doc, cleanText, MARGIN.left, y, 10, COLORS.black);
     y += 1.5;
     i++;
   }
