@@ -8,7 +8,7 @@ import { SkeletonBlock } from "@/components/shared/Loading";
 import Button from "@/components/shared/Button";
 
 export default function FeaturedCareers() {
-  const { data, isLoading } = usePublicCareers({
+  const { data, isLoading, error } = usePublicCareers({
     sort: "-rating",
     limit: 6,
   });
@@ -32,20 +32,42 @@ export default function FeaturedCareers() {
             <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
-        <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {isLoading
-            ? Array.from({ length: 6 }).map((_, i) => (
-                <div key={i} className="flex flex-col overflow-hidden rounded-2xl border border-[#27272A]">
-                  <SkeletonBlock className="h-48 w-full rounded-none" />
-                  <div className="flex flex-1 flex-col p-5">
-                    <SkeletonBlock className="h-5 w-3/4 rounded-lg" />
-                    <SkeletonBlock className="mt-3 h-4 w-full rounded-lg" />
-                    <SkeletonBlock className="mt-2 h-4 w-2/3 rounded-lg" />
-                    <SkeletonBlock className="mt-auto h-10 w-full rounded-xl" />
-                  </div>
+
+        {error ? (
+          <div className="mt-10 flex flex-col items-center justify-center py-12 text-center">
+            <p className="text-sm text-[#71717A]">
+              Unable to load featured careers. Please try again later.
+            </p>
+          </div>
+        ) : isLoading ? (
+          <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="flex flex-col overflow-hidden rounded-2xl border border-[#27272A]">
+                <SkeletonBlock className="h-48 w-full rounded-none" />
+                <div className="flex flex-1 flex-col p-5">
+                  <SkeletonBlock className="h-5 w-3/4 rounded-lg" />
+                  <SkeletonBlock className="mt-3 h-4 w-full rounded-lg" />
+                  <SkeletonBlock className="mt-2 h-4 w-2/3 rounded-lg" />
+                  <SkeletonBlock className="mt-auto h-10 w-full rounded-xl" />
                 </div>
-              ))
-            : careers.map((career) => (
+              </div>
+            ))}
+          </div>
+        ) : careers.length === 0 ? (
+          <div className="mt-10 flex flex-col items-center justify-center py-12 text-center">
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#27272A]">
+              <Briefcase className="h-7 w-7 text-[#71717A]" />
+            </div>
+            <h3 className="mt-4 text-lg font-semibold text-white">
+              No careers available yet
+            </h3>
+            <p className="mt-1 text-sm text-[#71717A]">
+              Check back soon for new career paths.
+            </p>
+          </div>
+        ) : (
+          <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {careers.map((career) => (
                 <div
                   key={career._id}
                   className="group flex flex-col overflow-hidden rounded-2xl border border-[#27272A] bg-[#111111] transition-all hover:-translate-y-1 hover:shadow-xl"
@@ -110,8 +132,10 @@ export default function FeaturedCareers() {
                   </div>
                 </div>
               ))}
-        </div>
-        {!isLoading && careers.length > 0 && (
+          </div>
+        )}
+
+        {!isLoading && !error && careers.length > 0 && (
           <div className="mt-10 text-center">
             <Link href="/careers">
               <Button variant="outline" size="lg" className="group gap-2">

@@ -12,6 +12,7 @@ import {
   Sparkles,
   ArrowRight,
   Loader2,
+  AlertCircle,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useCareerProfile } from "@/hooks/useCareerProfile";
@@ -27,7 +28,7 @@ function formatDate(dateString: string) {
 
 export default function ProfilePage() {
   const { user, isLoading: authLoading } = useAuth();
-  const { data: profile, isLoading: profileLoading } = useCareerProfile();
+  const { data: profile, isLoading: profileLoading, error: profileError } = useCareerProfile();
 
   if (authLoading) {
     return (
@@ -112,6 +113,15 @@ export default function ProfilePage() {
             <Loader2 className="h-4 w-4 animate-spin text-[#71717A]" />
             <span className="text-sm text-[#A1A1AA]">
               Loading career data...
+            </span>
+          </div>
+        ) : profileError ? (
+          <div className="flex items-center gap-3 rounded-xl border border-rose-500/20 bg-rose-500/5 p-4">
+            <AlertCircle className="h-4 w-4 shrink-0 text-rose-400" />
+            <span className="text-sm text-rose-300">
+              {profileError.message === "Career profile not found"
+                ? "No career profile created yet."
+                : "Failed to load career profile."}
             </span>
           </div>
         ) : profile ? (

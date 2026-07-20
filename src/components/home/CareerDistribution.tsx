@@ -18,7 +18,7 @@ const COLORS = [
 ];
 
 export default function CareerDistribution() {
-  const { data: distribution, isLoading } = useIndustryDistribution();
+  const { data: distribution, isLoading, error } = useIndustryDistribution();
 
   const chartData = distribution?.map((item) => ({
     name: item.industry,
@@ -41,6 +41,12 @@ export default function CareerDistribution() {
             <div className="flex flex-col gap-4">
               <SkeletonBlock className="h-8 w-32 rounded-lg" />
               <SkeletonBlock className="h-64 rounded-xl" />
+            </div>
+          ) : error ? (
+            <div className="flex h-64 items-center justify-center">
+              <p className="text-sm text-[#71717A]">
+                Unable to load distribution data. Please try again later.
+              </p>
             </div>
           ) : chartData.length === 0 ? (
             <div className="flex h-64 items-center justify-center">
