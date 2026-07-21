@@ -10,7 +10,7 @@ Built with Next.js, Express.js, MongoDB, TypeScript, and Groq's Llama 3.3 70B Ve
 
 ### Frontend
 
-https://scic-13-a05-project-2-client.vercel.app
+https://next-step-ai-client.vercel.app
 
 ### Backend
 
