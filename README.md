@@ -21,7 +21,7 @@ https://scic13-a05-project-2-server.onrender.com
 ## 📂 GitHub Repository
 
 ### Frontend
-https://github.com/Monoaratasnim/SCIC13-A05-Project-2-Client
+https://github.com/Monoaratasnim/NextStep-AI-Client
 
 ### Backend
 
