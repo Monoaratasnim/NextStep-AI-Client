@@ -21,7 +21,16 @@ const COLORS = {
   codeBg: [245, 246, 248] as RGB,
   metaBg: [250, 250, 252] as RGB,
   zebra: [247, 248, 250] as RGB,
-  divider: [218, 220, 226] as RGB,
+};
+
+// ── Vertical rhythm & section spacing (mm) ────────────────────────────────
+// Whitespace — never horizontal rules — separates sections.
+const SPACE = {
+  metaGap: 5,      // after the metadata box / title before the first block
+  blankLine: 2.5,  // between consecutive markdown lines
+  hrGap: 4,        // a markdown horizontal rule contributes whitespace only
+  keepMajor: 20,   // h1/h2 keep with following content (avoid orphan heading)
+  keepMinor: 12,   // h3/h4 keep with following content
 };
 
 // ── Centralized typography system ──────────────────────────────────────────
@@ -39,28 +48,28 @@ interface TypeStyle {
 const TYPE: Record<string, TypeStyle> = {
   brand: { family: "helvetica", weight: "bold", size: 16, color: COLORS.white, lh: 6 },
   brandSub: { family: "helvetica", weight: "normal", size: 8.5, color: COLORS.bandLight, lh: 4 },
-  title: { family: "helvetica", weight: "bold", size: 15, color: COLORS.ink, lh: 7, after: 2 },
+  title: { family: "helvetica", weight: "bold", size: 18, color: COLORS.ink, lh: 7.5, after: 3 },
   h1: {
-    family: "helvetica", weight: "bold", size: 13.5, color: COLORS.ink,
-    lh: 6, before: 2, after: 3,
+    family: "helvetica", weight: "bold", size: 15, color: COLORS.ink,
+    lh: 6, before: 7, after: 3.5,
   },
   h2: {
-    family: "helvetica", weight: "bold", size: 12, color: COLORS.primary,
-    lh: 5.4, before: 5, after: 3,
+    family: "helvetica", weight: "bold", size: 13.5, color: COLORS.primary,
+    lh: 5.6, before: 7.5, after: 3.5,
   },
   h3: {
-    family: "helvetica", weight: "bold", size: 11, color: COLORS.ink,
-    lh: 5, before: 3, after: 2,
+    family: "helvetica", weight: "bold", size: 11.5, color: COLORS.ink,
+    lh: 5, before: 5, after: 3,
   },
   h4: {
     family: "helvetica", weight: "bold", size: 10.5, color: COLORS.ink,
-    lh: 4.8, before: 2.5, after: 2,
+    lh: 4.8, before: 4.5, after: 2.5,
   },
-  body: { family: "helvetica", weight: "normal", size: 10, color: COLORS.ink, lh: 4.8, after: 3.5 },
-  bullet: { family: "helvetica", weight: "normal", size: 10, color: COLORS.ink, lh: 4.6, after: 2 },
+  body: { family: "helvetica", weight: "normal", size: 10, color: COLORS.ink, lh: 4.8, after: 4 },
+  bullet: { family: "helvetica", weight: "normal", size: 10, color: COLORS.ink, lh: 4.6, after: 2.8 },
   quote: {
     family: "helvetica", weight: "italic", size: 10, color: COLORS.gray,
-    lh: 4.6, before: 2, after: 3,
+    lh: 4.6, before: 3, after: 4,
   },
   code: {
     family: "helvetica", weight: "italic", size: 9, color: COLORS.ink,
@@ -299,12 +308,6 @@ function addFooter(doc: jsPDF) {
   }
 }
 
-function addDivider(doc: jsPDF, y: number) {
-  doc.setDrawColor(...COLORS.divider);
-  doc.setLineWidth(0.3);
-  doc.line(PAGE.left, y, PAGE.width - PAGE.right, y);
-}
-
 // ── Block renderers (each returns the next y) ─────────────────────────────
 function renderHeading(
   doc: jsPDF,
@@ -312,11 +315,17 @@ function renderHeading(
   style: TypeStyle,
   y: number
 ): number {
-  y = ensureSpace(doc, y, (style.before ?? 0) + 2 + (style.after ?? 0));
-  y += style.before ?? 0;
   const lines = wrapInline(doc, text, style, CONTENT_WIDTH);
+  const textH = lines.length * style.lh;
+  const before = style.before ?? 0;
+  const after = style.after ?? 0;
+  // Keep the heading on the same page as at least a couple of content lines
+  // so a section heading is never left stranded at the bottom of a page.
+  const keep = style.size >= 12 ? SPACE.keepMajor : SPACE.keepMinor;
+  y = ensureSpace(doc, y, before + 2 + textH + keep);
+  y += before;
   lines.forEach((line, i) => drawInline(doc, line, style, PAGE.left, y + i * style.lh));
-  return y + lines.length * style.lh + (style.after ?? 0);
+  return y + textH + after;
 }
 
 function renderParagraph(
@@ -406,7 +415,6 @@ function renderTable(doc: jsPDF, rows: string[][], y: number): number {
   const colWidth = CONTENT_WIDTH / colCount;
   const cellPad = 2;
   let rowY = y;
-  let firstRowY = y;
 
   rows.forEach((row, r) => {
     const header = r === 0;
@@ -419,7 +427,6 @@ function renderTable(doc: jsPDF, rows: string[][], y: number): number {
     const maxLines = Math.max(1, ...cellLines.map((cl) => cl.length));
     const rowHeight = maxLines * style.lh + 3;
     rowY = ensureSpace(doc, rowY, rowHeight + 1);
-    if (r === 0) firstRowY = rowY;
 
     doc.setFillColor(...(header ? COLORS.primary : r % 2 === 0 ? COLORS.zebra : COLORS.white));
     doc.rect(PAGE.left, rowY, CONTENT_WIDTH, rowHeight, "F");
@@ -431,9 +438,7 @@ function renderTable(doc: jsPDF, rows: string[][], y: number): number {
     rowY += rowHeight;
   });
 
-  addDivider(doc, firstRowY - 1);
-  addDivider(doc, rowY);
-  return rowY + 3;
+  return rowY + 4;
 }
 
 // ── Main ──────────────────────────────────────────────────────────────────
@@ -480,8 +485,7 @@ export function generatePdf(
     y = y + boxH + 4;
   }
 
-  addDivider(doc, y);
-  y += 6;
+  y += SPACE.metaGap;
 
   // Markdown body
   const sourceLines = normalizeForPdf(markdownContent).split("\n");
@@ -492,7 +496,7 @@ export function generatePdf(
     const trimmed = rawLine.trim();
 
     if (trimmed === "") {
-      y += 2.5;
+      y += SPACE.blankLine;
       i++;
       continue;
     }
@@ -540,9 +544,6 @@ export function generatePdf(
     if (rawLine.startsWith("## ")) {
       const text = rawLine.replace(/^##\s+/, "").replace(/^\d+\.\s*/, "");
       y = renderHeading(doc, text, TYPE.h2, y);
-      doc.setDrawColor(...COLORS.primary);
-      doc.setLineWidth(0.4);
-      doc.line(PAGE.left, y - 1.5, PAGE.left + 24, y - 1.5);
       i++;
       continue;
     }
@@ -559,11 +560,9 @@ export function generatePdf(
       continue;
     }
 
-    // Horizontal rule
+    // Horizontal rule → pure whitespace (never a drawn line)
     if (trimmed.match(/^[-*_]{3,}$/)) {
-      y += 2;
-      addDivider(doc, y);
-      y += 4;
+      y += SPACE.hrGap;
       i++;
       continue;
     }
