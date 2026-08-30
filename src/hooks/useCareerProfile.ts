@@ -3,7 +3,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { careerService } from "@/services/career.service";
 import type { CreateCareerPayload, UpdateCareerPayload } from "@/types/career";
 
-export function useCareerProfile() {
+export function useCareerProfile(enabled = true) {
   const { user } = useAuth();
   const userId = user?._id;
 
@@ -11,7 +11,7 @@ export function useCareerProfile() {
     queryKey: ["career", "profile", userId],
     queryFn: careerService.getProfile,
     retry: false,
-    enabled: !!userId,
+    enabled: enabled && !!userId,
   });
 }
 

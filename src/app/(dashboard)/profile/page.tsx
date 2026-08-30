@@ -28,7 +28,10 @@ function formatDate(dateString: string) {
 
 export default function ProfilePage() {
   const { user, isLoading: authLoading } = useAuth();
-  const { data: profile, isLoading: profileLoading, error: profileError } = useCareerProfile();
+  const isAdmin = user?.role === "admin";
+  const { data: profile, isLoading: profileLoading, error: profileError } = useCareerProfile(
+    !isAdmin
+  );
 
   if (authLoading) {
     return (
@@ -103,97 +106,99 @@ export default function ProfilePage() {
       </div>
 
       {/* Career Profile Summary */}
-      <div className="rounded-2xl border border-[#27272A] bg-[#111111] p-6">
-        <h3 className="text-sm font-semibold text-white mb-4">
-          Career Profile Summary
-        </h3>
+      {!isAdmin && (
+        <div className="rounded-2xl border border-[#27272A] bg-[#111111] p-6">
+          <h3 className="text-sm font-semibold text-white mb-4">
+            Career Profile Summary
+          </h3>
 
-        {profileLoading ? (
-          <div className="flex items-center gap-3">
-            <Loader2 className="h-4 w-4 animate-spin text-[#71717A]" />
-            <span className="text-sm text-[#A1A1AA]">
-              Loading career data...
-            </span>
-          </div>
-        ) : profileError ? (
-          <div className="flex items-center gap-3 rounded-xl border border-rose-500/20 bg-rose-500/5 p-4">
-            <AlertCircle className="h-4 w-4 shrink-0 text-rose-400" />
-            <span className="text-sm text-rose-300">
-              {profileError.message === "Career profile not found"
-                ? "No career profile created yet."
-                : "Failed to load career profile."}
-            </span>
-          </div>
-        ) : profile ? (
-          <div className="space-y-4">
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="flex items-center gap-3 rounded-xl bg-[#18181B] p-3 border border-[#27272A]">
-                <Target className="h-4 w-4 text-[#71717A]" />
-                <div>
-                  <p className="text-3xs font-medium uppercase tracking-wider text-[#71717A]">
-                    Career Goal
-                  </p>
-                  <p className="text-xs font-medium text-white">
-                    {profile.careerGoal}
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3 rounded-xl bg-[#18181B] p-3 border border-[#27272A]">
-                <GraduationCap className="h-4 w-4 text-[#71717A]" />
-                <div>
-                  <p className="text-3xs font-medium uppercase tracking-wider text-[#71717A]">
-                    Experience Level
-                  </p>
-                  <p className="text-xs font-medium text-white">
-                    {profile.experienceLevel}
-                  </p>
-                </div>
-              </div>
+          {profileLoading ? (
+            <div className="flex items-center gap-3">
+              <Loader2 className="h-4 w-4 animate-spin text-[#71717A]" />
+              <span className="text-sm text-[#A1A1AA]">
+                Loading career data...
+              </span>
             </div>
-
-            {profile.skills.length > 0 && (
-              <div>
-                <p className="text-3xs font-medium uppercase tracking-wider text-[#71717A] mb-2">
-                  Skills
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {profile.skills.map((skill) => (
-                    <span
-                      key={skill}
-                      className="inline-flex rounded-lg bg-[#4F46E5]/10 px-2.5 py-1 text-xs font-medium text-[#4F46E5]"
-                    >
-                      {skill}
-                    </span>
-                  ))}
+          ) : profileError ? (
+            <div className="flex items-center gap-3 rounded-xl border border-rose-500/20 bg-rose-500/5 p-4">
+              <AlertCircle className="h-4 w-4 shrink-0 text-rose-400" />
+              <span className="text-sm text-rose-300">
+                {profileError.message === "Career profile not found"
+                  ? "No career profile created yet."
+                  : "Failed to load career profile."}
+              </span>
+            </div>
+          ) : profile ? (
+            <div className="space-y-4">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="flex items-center gap-3 rounded-xl bg-[#18181B] p-3 border border-[#27272A]">
+                  <Target className="h-4 w-4 text-[#71717A]" />
+                  <div>
+                    <p className="text-3xs font-medium uppercase tracking-wider text-[#71717A]">
+                      Career Goal
+                    </p>
+                    <p className="text-xs font-medium text-white">
+                      {profile.careerGoal}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 rounded-xl bg-[#18181B] p-3 border border-[#27272A]">
+                  <GraduationCap className="h-4 w-4 text-[#71717A]" />
+                  <div>
+                    <p className="text-3xs font-medium uppercase tracking-wider text-[#71717A]">
+                      Experience Level
+                    </p>
+                    <p className="text-xs font-medium text-white">
+                      {profile.experienceLevel}
+                    </p>
+                  </div>
                 </div>
               </div>
-            )}
 
-            <Link
-              href="/career-profile"
-              className="inline-flex items-center gap-1.5 text-xs font-medium text-[#71717A] hover:text-white transition-colors"
-            >
-              View full career profile
-              <ArrowRight className="h-3.5 w-3.5" />
-            </Link>
-          </div>
-        ) : (
-          <div className="rounded-xl border border-dashed border-[#27272A] bg-[#111111] p-6 text-center">
-            <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-xl bg-[#4F46E5]/10">
-              <Sparkles className="h-5 w-5 text-[#4F46E5]" />
-            </div>
-            <p className="mt-3 text-sm text-[#A1A1AA]">
-              No career profile yet.
-            </p>
-            <Link href="/career-profile" className="mt-3 inline-block">
-              <Button variant="primary" size="sm" className="gap-1.5">
-                Create Profile
+              {profile.skills.length > 0 && (
+                <div>
+                  <p className="text-3xs font-medium uppercase tracking-wider text-[#71717A] mb-2">
+                    Skills
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {profile.skills.map((skill) => (
+                      <span
+                        key={skill}
+                        className="inline-flex rounded-lg bg-[#4F46E5]/10 px-2.5 py-1 text-xs font-medium text-[#4F46E5]"
+                      >
+                        {skill}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <Link
+                href="/career-profile"
+                className="inline-flex items-center gap-1.5 text-xs font-medium text-[#71717A] hover:text-white transition-colors"
+              >
+                View full career profile
                 <ArrowRight className="h-3.5 w-3.5" />
-              </Button>
-            </Link>
-          </div>
-        )}
-      </div>
+              </Link>
+            </div>
+          ) : (
+            <div className="rounded-xl border border-dashed border-[#27272A] bg-[#111111] p-6 text-center">
+              <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-xl bg-[#4F46E5]/10">
+                <Sparkles className="h-5 w-5 text-[#4F46E5]" />
+              </div>
+              <p className="mt-3 text-sm text-[#A1A1AA]">
+                No career profile yet.
+              </p>
+              <Link href="/career-profile" className="mt-3 inline-block">
+                <Button variant="primary" size="sm" className="gap-1.5">
+                  Create Profile
+                  <ArrowRight className="h-3.5 w-3.5" />
+                </Button>
+              </Link>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
