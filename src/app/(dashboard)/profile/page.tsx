@@ -60,9 +60,6 @@ export default function ProfilePage() {
         <h2 className="text-2xl font-bold tracking-tight text-white">
           My Profile
         </h2>
-        <p className="mt-1 text-sm text-[#A1A1AA]">
-          Your account information and career overview.
-        </p>
       </div>
 
       {/* User Info Card */}
@@ -100,7 +97,7 @@ export default function ProfilePage() {
           <InfoRow
             icon={Briefcase}
             label="Profile Status"
-            value={profile ? "Completed" : "Not created"}
+            value={isAdmin ? "Active" : profile ? "Completed" : "Not created"}
           />
         </div>
       </div>
